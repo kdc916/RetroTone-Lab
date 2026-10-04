@@ -1,4 +1,4 @@
-# RetroTone Lab v0.1.6
+# RetroTone Lab v0.1.7
 
 브라우저에서 사진을 불러와 2000년대 디지털 카메라, 레트로, 필름 인화 색감을 빠르게 만드는 단일 HTML 도구입니다.
 
@@ -137,3 +137,16 @@
 - `.stage`, `.preset-dock`, `.preset-dock-head`, `.preset-tabs`, `.preset-strip`의 min/max width 제한
 - 모바일 viewer에 `max-width:100vw` 강제
 - 패치 후 두 테스트 이미지 모두 canvas가 화면 안에 위치하고 실제 픽셀 표시 확인
+
+
+## v0.1.7
+
+- 실제 제공 JPG 2종 + PNG + WebP + EXIF Orientation=6 JPEG 브라우저 회귀 테스트
+- 390 / 412 / 768 / 1280px viewport에서 전 포맷 화면 내부 표시 확인
+- JPEG EXIF Orientation parser 추가 및 회전 메타 검증
+- Android content:// 안정성을 위해 FileReader → ObjectURL → ImageBitmap fallback 유지
+- 이미지 연속 교체 시 이전 비동기 로드가 최신 이미지를 덮어쓰지 않도록 load sequence guard 추가
+- ImageBitmap 교체/페이지 종료 시 close()로 메모리 정리
+- HEIC 디코더에 버전 쿼리 cache-busting 적용
+- standalone HTML은 HEIC decoder를 inert inline payload로 포함해 로컬 실행 시 네트워크 없이 지연 활성화
+- 220MB 초과 단일 이미지 입력 보호

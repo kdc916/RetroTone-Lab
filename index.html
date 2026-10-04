@@ -3,7 +3,10 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>RetroTone Lab v0.1.6</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
+<title>RetroTone Lab v0.1.7</title>
 <style>
   :root{
     --bg:#0f1115; --panel:#171a21; --panel2:#1e222b; --line:#2c323e;
@@ -124,7 +127,7 @@
 <div class="app">
   <header>
     <div class="topbar">
-      <div class="brand"><div class="logo"></div><div><b>RetroTone Lab</b><small>2000s · Retro · Film Color Tool v0.1.6</small></div></div>
+      <div class="brand"><div class="logo"></div><div><b>RetroTone Lab</b><small>2000s · Retro · Film Color Tool v0.1.7</small></div></div>
       <div class="top-actions">
         <button class="btn ghost" id="resetBtn">초기화</button>
         <button class="btn" id="openBtn">사진 열기</button>
@@ -241,6 +244,8 @@
   };
   const state = Object.fromEntries(Object.entries(controls).map(([k,c])=>[k,c.val]));
   let activePreset='neutral', sourceImg=null, sourceName='photo', renderTimer=null, compareMode=false, randomSeed=92831;
+  const BUILD_VERSION='0.1.7', PREVIEW_MAX_DIM=1600;
+  let loadSequence=0;
 
   const presets = [
     {cat:'2000s DIGITAL',id:'neutral',name:'Clean Base',desc:'조정 전 기본 톤',v:{}},
@@ -385,7 +390,7 @@
     overlayVignette(ctx,w,h,values.vignette); overlayDust(ctx,w,h,values.dust,seed+77); drawDate(ctx,w,h);
   }
   function scheduleRender(){clearTimeout(renderTimer);renderTimer=setTimeout(renderPreview,30);}
-  function renderPreview(){if(!sourceImg)return; const c=$('#previewCanvas');renderToCanvas(c,state,1600,randomSeed);}
+  function renderPreview(){if(!sourceImg)return; const c=$('#previewCanvas');renderToCanvas(c,state,PREVIEW_MAX_DIM,randomSeed);}
 
   const IMAGE_EXT_RE=/\.(jpe?g|png|webp|gif|bmp|heic|heif)$/i;
   let heicLoaderPromise=null;
@@ -395,75 +400,81 @@
     const m=name.match(/\.([^.]+)$/);
     return m?m[1]:'';
   }
-
+  function releaseDrawable(drawable){
+    if(drawable && typeof drawable.close==='function'){
+      try{drawable.close();}catch(_){}
+    }
+  }
+  async function readJpegOrientation(file){
+    try{
+      const buf=await file.slice(0,Math.min(file.size,262144)).arrayBuffer();
+      const v=new DataView(buf);
+      if(v.byteLength<4 || v.getUint16(0,false)!==0xFFD8)return 1;
+      let off=2;
+      while(off+4<=v.byteLength){
+        if(v.getUint8(off)!==0xFF){off++;continue;}
+        const marker=v.getUint8(off+1); off+=2;
+        if(marker===0xDA||marker===0xD9)break;
+        if(off+2>v.byteLength)break;
+        const len=v.getUint16(off,false);
+        if(len<2||off+len>v.byteLength)break;
+        if(marker===0xE1 && len>=10 && v.getUint32(off+2,false)===0x45786966 && v.getUint16(off+6,false)===0){
+          const tiff=off+8;
+          const little=v.getUint16(tiff,false)===0x4949;
+          const get16=o=>v.getUint16(o,little), get32=o=>v.getUint32(o,little);
+          if(get16(tiff+2)!==0x002A)return 1;
+          const ifd=tiff+get32(tiff+4);
+          if(ifd+2>v.byteLength)return 1;
+          const n=get16(ifd);
+          for(let i=0;i<n;i++){
+            const e=ifd+2+i*12;
+            if(e+12>v.byteLength)break;
+            if(get16(e)===0x0112){
+              const o=get16(e+8);
+              return o>=1&&o<=8?o:1;
+            }
+          }
+          return 1;
+        }
+        off+=len;
+      }
+    }catch(e){console.warn('EXIF orientation read failed:',e);}
+    return 1;
+  }
   async function sniffImageKind(file){
     if(!file)return 'unknown';
     const type=(file.type||'').toLowerCase();
     const ext=extOf(file);
-
     if(type.includes('heic')||type.includes('heif')||ext==='heic'||ext==='heif')return 'heic';
     if(type==='image/jpeg'||ext==='jpg'||ext==='jpeg')return 'jpeg';
     if(type==='image/png'||ext==='png')return 'png';
     if(type==='image/webp'||ext==='webp')return 'webp';
     if(type==='image/gif'||ext==='gif')return 'gif';
     if(type==='image/bmp'||ext==='bmp')return 'bmp';
-
     try{
       const b=new Uint8Array(await file.slice(0,16).arrayBuffer());
       if(b.length>=12){
-        // JPEG
         if(b[0]===0xFF&&b[1]===0xD8&&b[2]===0xFF)return 'jpeg';
-        // PNG
         if(b[0]===0x89&&b[1]===0x50&&b[2]===0x4E&&b[3]===0x47)return 'png';
-        // GIF
         if(b[0]===0x47&&b[1]===0x49&&b[2]===0x46&&b[3]===0x38)return 'gif';
-        // BMP
         if(b[0]===0x42&&b[1]===0x4D)return 'bmp';
-        // WEBP: RIFF....WEBP
         if(String.fromCharCode(...b.slice(0,4))==='RIFF'&&String.fromCharCode(...b.slice(8,12))==='WEBP')return 'webp';
-        // HEIF/HEIC brand at byte 8
         const brand=String.fromCharCode(...b.slice(8,12));
         if(['heic','heix','hevc','hevx','mif1','msf1'].includes(brand))return 'heic';
       }
-    }catch(e){
-      console.warn('Image signature sniff failed:',e);
-    }
-
+    }catch(e){console.warn('Image signature sniff failed:',e);}
     if(type.startsWith('image/'))return 'image';
     if(IMAGE_EXT_RE.test(file.name||''))return ext==='heic'||ext==='heif'?'heic':'image';
     return 'unknown';
   }
-
-  function showLoadStatus(title,text='',error=false){
-    const box=$('#loadStatus');
-    if(!box)return;
-    box.hidden=false;
-    box.classList.toggle('error',!!error);
-    $('#loadStatusTitle').textContent=title;
-    $('#loadStatusText').textContent=text;
-  }
-  function hideLoadStatus(delay=0){
-    const box=$('#loadStatus');
-    if(!box)return;
-    if(delay)setTimeout(()=>{box.hidden=true;box.classList.remove('error');},delay);
-    else{box.hidden=true;box.classList.remove('error');}
-  }
   function setLoadState(text,busy=false){
-    const strong=$('#dropZone strong');
-    if(strong)strong.textContent=text;
-    const open=$('#openBtn');
-    if(open)open.disabled=busy;
-    const dz=$('#dropZone');
-    if(dz)dz.style.opacity=busy?'.65':'1';
+    const strong=$('#dropZone strong'); if(strong)strong.textContent=text;
+    const open=$('#openBtn'); if(open)open.disabled=busy;
+    const dz=$('#dropZone'); if(dz)dz.style.opacity=busy?'.65':'1';
   }
-  function errorText(err){
-    const t=String(err?.message||err||'알 수 없는 오류');
-    return t.length>160?t.slice(0,157)+'…':t;
-  }
-
   function dataUrlToImage(dataUrl){
     return new Promise((resolve,reject)=>{
-      const img=new Image();
+      const img=new Image(); img.decoding='async';
       img.onload=()=>resolve(img);
       img.onerror=()=>reject(new Error('브라우저 이미지 디코딩 실패'));
       img.src=dataUrl;
@@ -479,181 +490,111 @@
   }
   function objectUrlToImage(blob){
     return new Promise((resolve,reject)=>{
-      const url=URL.createObjectURL(blob);
-      const img=new Image();
+      const url=URL.createObjectURL(blob); const img=new Image(); img.decoding='async';
       img.onload=()=>{URL.revokeObjectURL(url);resolve(img);};
       img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('Blob URL 이미지 디코딩 실패'));};
       img.src=url;
     });
   }
-
   async function decodeStandardImage(file){
-    // 1) Best path on modern Android/Chrome/Samsung Internet.
+    try{return await dataUrlToImage(await readBlobAsDataURL(file));}
+    catch(e){console.warn('FileReader decode failed:',e);}
+    try{return await objectUrlToImage(file);}
+    catch(e){console.warn('ObjectURL decode failed:',e);}
     if(typeof createImageBitmap==='function'){
-      try{
-        return await createImageBitmap(file,{imageOrientation:'from-image'});
-      }catch(e1){
-        console.warn('createImageBitmap(options) failed:',e1);
-        try{
-          return await createImageBitmap(file);
-        }catch(e2){
-          console.warn('createImageBitmap() failed:',e2);
-        }
-      }
+      try{return await createImageBitmap(file,{imageOrientation:'from-image'});}
+      catch(_){return await createImageBitmap(file);}
     }
-
-    // 2) Most compatible path for content:// file providers.
-    try{
-      return await dataUrlToImage(await readBlobAsDataURL(file));
-    }catch(e){
-      console.warn('FileReader data URL decode failed:',e);
-    }
-
-    // 3) Final fallback.
-    return await objectUrlToImage(file);
+    throw new Error('이미지를 디코딩할 수 없습니다');
   }
-
   function loadScript(src,timeout=20000){
     return new Promise((resolve,reject)=>{
-      const old=[...document.scripts].find(s=>s.src===new URL(src,location.href).href);
-      if(old && typeof window.HeicTo==='function')return resolve();
-      const s=document.createElement('script');
-      s.src=src;
-      s.async=true;
+      const absolute=(()=>{try{return new URL(src,location.href).href}catch(_){return src}})();
+      const old=[...document.scripts].find(s=>s.src===absolute);
+      if(old&&typeof window.HeicTo==='function')return resolve();
+      const s=document.createElement('script'); s.src=src; s.async=true;
       let done=false;
-      const timer=setTimeout(()=>{
-        if(done)return; done=true; s.remove();
-        reject(new Error('HEIC 디코더 로딩 시간 초과'));
-      },timeout);
-      s.onload=()=>{
-        if(done)return; done=true; clearTimeout(timer);
-        typeof window.HeicTo==='function'?resolve():reject(new Error('HEIC 디코더 초기화 실패'));
-      };
-      s.onerror=()=>{
-        if(done)return; done=true; clearTimeout(timer); s.remove();
-        reject(new Error('HEIC 디코더 파일 로딩 실패'));
-      };
+      const timer=setTimeout(()=>{if(done)return;done=true;s.remove();reject(new Error('HEIC 디코더 로딩 시간 초과'));},timeout);
+      s.onload=()=>{if(done)return;done=true;clearTimeout(timer);typeof window.HeicTo==='function'?resolve():reject(new Error('HEIC 디코더 초기화 실패'));};
+      s.onerror=()=>{if(done)return;done=true;clearTimeout(timer);s.remove();reject(new Error('HEIC 디코더 파일 로딩 실패'));};
       document.head.appendChild(s);
     });
   }
-
+  function loadEmbeddedHeicDecoder(){
+    const holder=document.getElementById('heicDecoderSource');
+    if(!holder||!holder.textContent.trim())return false;
+    const s=document.createElement('script'); s.textContent=holder.textContent; document.head.appendChild(s);
+    return typeof window.HeicTo==='function';
+  }
   async function ensureHeicDecoder(){
     if(typeof window.HeicTo==='function')return window.HeicTo;
     if(heicLoaderPromise)return heicLoaderPromise;
-
     heicLoaderPromise=(async()=>{
+      if(loadEmbeddedHeicDecoder())return window.HeicTo;
       const remote='https://cdn.jsdelivr.net/npm/heic-to@1.6.5/dist/iife/heic-to.js';
       const isWeb=location.protocol==='http:'||location.protocol==='https:';
-      const sources=isWeb?['./vendor/heic-to.js',remote]:[remote];
-
+      const sources=isWeb?['./vendor/heic-to.js?v='+BUILD_VERSION,remote]:[remote];
       let lastError=null;
       for(const src of sources){
-        try{
-          await loadScript(src);
-          if(typeof window.HeicTo==='function')return window.HeicTo;
-        }catch(e){
-          lastError=e;
-          console.warn('HEIC decoder source failed:',src,e);
-        }
+        try{await loadScript(src);if(typeof window.HeicTo==='function')return window.HeicTo;}
+        catch(e){lastError=e;console.warn('HEIC decoder source failed:',src,e);}
       }
       heicLoaderPromise=null;
       throw lastError||new Error('HEIC 디코더를 사용할 수 없습니다');
     })();
-
     return heicLoaderPromise;
   }
-
   async function decodeHeic(file){
-    // Some mobile browsers/OS versions can decode HEIC natively.
     if(typeof createImageBitmap==='function'){
       try{
         const nativeBitmap=await createImageBitmap(file,{imageOrientation:'from-image'});
         if(nativeBitmap?.width>0&&nativeBitmap?.height>0)return nativeBitmap;
-      }catch(e){
-        console.info('Native HEIC decode unavailable:',e);
-      }
+      }catch(e){console.info('Native HEIC decode unavailable:',e);}
     }
-
     const HeicTo=await ensureHeicDecoder();
-
-    if(typeof HeicTo.isHeic==='function'){
-      const confirmed=await HeicTo.isHeic(file);
-      if(!confirmed)throw new Error('유효한 HEIC/HEIF 파일로 확인되지 않았습니다');
-    }
-
+    if(typeof HeicTo.isHeic==='function' && !await HeicTo.isHeic(file))throw new Error('유효한 HEIC/HEIF 파일이 아닙니다');
     try{
       const bitmap=await HeicTo({blob:file,type:'bitmap'});
       if(bitmap?.width>0&&bitmap?.height>0)return bitmap;
-    }catch(e){
-      console.warn('HEIC bitmap decode failed:',e);
-    }
-
+    }catch(e){console.warn('HEIC bitmap decode failed:',e);}
     const converted=await HeicTo({blob:file,type:'image/jpeg',quality:0.96});
     if(!(converted instanceof Blob))throw new Error('HEIC 변환 결과가 올바르지 않습니다');
     return await decodeStandardImage(converted);
   }
-
-  function preparePreview(img,file){
+  function finishLoadedImage(img,file,token,meta={}){
+    if(token!==loadSequence){releaseDrawable(img);return false;}
     const sw=img.naturalWidth||img.width, sh=img.naturalHeight||img.height;
-    if(!sw||!sh)throw new Error('이미지 크기를 확인할 수 없습니다');
-
-    if(sourceImg && typeof sourceImg.close==='function'){
-      try{sourceImg.close();}catch(_){}
-    }
-    sourceImg=img;
-    sourceName=(file.name||'photo').replace(/\.[^.]+$/,'');
-
-    const canvas=$('#previewCanvas');
-    canvas.hidden=false;
-    $('#emptyState').hidden=true;
+    if(!sw||!sh){releaseDrawable(img);throw new Error('이미지 크기를 확인할 수 없습니다');}
+    clearTimeout(renderTimer);
+    releaseDrawable(sourceImg);
+    sourceImg=img; sourceName=(file.name||'photo').replace(/\.[^.]+$/,'');
+    $('#previewCanvas').hidden=false; $('#emptyState').hidden=true;
     ['#exportBtn','#exportBtn2','#compareBtn','#fitBtn','#randomBtn'].forEach(s=>$(s).disabled=false);
-
-    // First paint the source image before running any effect code.
-    // Even if an effect fails, the user must still see the loaded photo.
-    drawSourceTo(canvas,1600);
-    return {sw,sh};
+    drawSourceTo($('#previewCanvas'),PREVIEW_MAX_DIM);
+    requestAnimationFrame(()=>{if(token===loadSequence){try{renderPreview();}catch(e){console.error('Preview render failed:',e);}}});
+    console.info('RetroTone loaded',{name:file.name,kind:meta.kind,orientation:meta.orientation,width:sw,height:sh,size:file.size});
+    return true;
   }
-
-  function finishLoadedImage(img,file){
-    const {sw,sh}=preparePreview(img,file);
-    try{
-      renderPreview();
-      showLoadStatus('불러오기 완료',`${sw} × ${sh}`);
-      hideLoadStatus(550);
-    }catch(renderErr){
-      console.error('Effect render failed:',renderErr);
-      // Keep the original already painted by preparePreview().
-      showLoadStatus('사진은 열렸습니다','효과 처리 오류: '+errorText(renderErr),true);
-    }
-  }
-
   async function loadFile(file){
     if(!file)return;
+    const token=++loadSequence;
+    if(file.size>220*1024*1024){alert('파일이 너무 큽니다. 220MB 이하 이미지를 사용해 주세요.');return;}
     setLoadState('파일 확인 중…',true);
-    showLoadStatus('파일 확인 중…',file.name||'');
-
     try{
       const kind=await sniffImageKind(file);
-      if(kind==='unknown'){
-        throw new Error('지원 이미지 형식으로 확인되지 않았습니다');
-      }
-
-      const isHeic=kind==='heic';
-      setLoadState(isHeic?'HEIC/HEIF 변환 중…':'사진 불러오는 중…',true);
-      showLoadStatus(
-        isHeic?'HEIC/HEIF 변환 중…':'사진 불러오는 중…',
-        isHeic?'모바일에서는 사진 크기에 따라 몇 초 걸릴 수 있습니다.':(file.name||'')
-      );
-
-      const img=isHeic?await decodeHeic(file):await decodeStandardImage(file);
-      finishLoadedImage(img,file);
+      if(token!==loadSequence)return;
+      if(kind==='unknown')throw new Error('지원 이미지 형식으로 확인되지 않았습니다');
+      const orientation=kind==='jpeg'?await readJpegOrientation(file):1;
+      if(token!==loadSequence)return;
+      const heic=kind==='heic';
+      setLoadState(heic?'HEIC/HEIF 변환 중…':'사진 불러오는 중…',true);
+      const img=heic?await decodeHeic(file):await decodeStandardImage(file);
+      if(token!==loadSequence){releaseDrawable(img);return;}
+      finishLoadedImage(img,file,token,{kind,orientation});
     }catch(err){
-      console.error('RetroTone image load failed:',err);
-      showLoadStatus('사진 불러오기 실패',errorText(err),true);
+      if(token===loadSequence){console.error('RetroTone image load failed:',err);alert('사진 불러오기 실패: '+String(err?.message||err||'알 수 없는 오류'));}
     }finally{
-      setLoadState('사진을 드롭하거나 클릭',false);
-      const input=$('#fileInput');
-      if(input)input.value='';
+      if(token===loadSequence){setLoadState('사진을 드롭하거나 클릭',false);const input=$('#fileInput');if(input)input.value='';}
     }
   }
 
@@ -687,6 +628,7 @@
   $('#quality').addEventListener('input',()=>$('#qualityVal').textContent=$('#quality').value+'%');
   $('#presetWrap').addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){e.preventDefault();$('#presetWrap').scrollLeft+=e.deltaY;}},{passive:false});
   window.addEventListener('paste',e=>{const f=[...e.clipboardData.files].find(x=>x.type.startsWith('image/')||IMAGE_EXT_RE.test(x.name||''));if(f)loadFile(f)});
+  window.addEventListener('pagehide',()=>{clearTimeout(renderTimer);releaseDrawable(sourceImg);sourceImg=null;});
   window.addEventListener('resize',()=>{
     const viewer=document.querySelector('.viewer');
     if(!window.matchMedia('(max-width:760px)').matches){

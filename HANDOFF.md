@@ -1,8 +1,8 @@
 # RetroTone Lab — Development Handoff
 
 ## Version
-- v0.1.6
-- Mobile Grid Overflow / Preview Visibility Fix
+- v0.1.7
+- Loader Stability / EXIF Orientation / Memory Lifecycle
 
 ## Product Goal
 사진 한 장을 넣고 2000년대 디카, 레트로 인화사진, 필름 네거티브/일회용 카메라 분위기를 빠르게 만들 수 있는 로컬 브라우저 기반 이미지 스타일링 도구.
@@ -141,3 +141,16 @@ v0.1.0을 초기 안정 기준으로 사용. 이후 기능 추가 시 아래 동
 - Regression test after fix:
   - 19357.jpg: canvas rect x≈39.9, width≈310.2, center pixel RGBA 63/127/77/255
   - 19564.jpg: canvas rect x≈56.7, width≈276.6, center pixel RGBA 66/67/72/255
+
+
+## v0.1.7 Change Log
+- Browser regression matrix: supplied JPG x2, generated PNG, generated WebP, EXIF Orientation=6 JPEG
+- Viewports tested: 390x844 / 412x915 / 768x1024 / 1280x800
+- No page JavaScript errors in the matrix
+- Orientation=6 JPEG rendered as 360x640 from a stored 640x360 source, confirming browser orientation application
+- Added loadSequence race guard
+- Added ImageBitmap release on replace and pagehide
+- Added 220MB input guard
+- Added BUILD_VERSION/PREVIEW_MAX_DIM constants
+- Added HEIC vendor cache-busting
+- Standalone build embeds HEIC decoder inertly and activates it only when HEIC is selected
