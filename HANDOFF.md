@@ -1,8 +1,8 @@
 # RetroTone Lab — Development Handoff
 
 ## Version
-- v0.1.4
-- Offline HEIC Decoder / Android Fix
+- v0.1.5
+- Robust Image Loader / HEIC Isolation
 
 ## Product Goal
 사진 한 장을 넣고 2000년대 디카, 레트로 인화사진, 필름 네거티브/일회용 카메라 분위기를 빠르게 만들 수 있는 로컬 브라우저 기반 이미지 스타일링 도구.
@@ -117,3 +117,15 @@ v0.1.0을 초기 안정 기준으로 사용. 이후 기능 추가 시 아래 동
 - visible HEIC progress/error status overlay
 - source dimensions를 naturalWidth/width 양쪽 지원
 - standalone HTML에는 decoder inline
+
+
+## v0.1.5 Change Log
+- Standard image decode is independent from HEIC runtime
+- MIME + extension + magic-byte image detection
+- createImageBitmap -> FileReader DataURL -> ObjectURL fallback
+- HEIC decoder lazy-load only on HEIC selection
+- Web mode: local vendor first, CDN fallback
+- Local/content:// mode: CDN HEIC lazy-load
+- Paint source image before effects so rendering regressions cannot hide successful loads
+- User-visible exact load/render error message
+- hidden attribute CSS hardening for Samsung/Android

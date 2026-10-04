@@ -1,4 +1,4 @@
-# RetroTone Lab v0.1.4
+# RetroTone Lab v0.1.5
 
 브라우저에서 사진을 불러와 2000년대 디지털 카메라, 레트로, 필름 인화 색감을 빠르게 만드는 단일 HTML 도구입니다.
 
@@ -111,3 +111,18 @@
 - 모바일 미리보기 위에 변환 중/완료/실패 상태 표시
 - 변환 결과의 실제 width/height 검증 후 Canvas에 전달
 - 다운로드용 standalone HTML은 HEIC decoder까지 파일 내부에 포함
+
+
+## v0.1.5
+
+- 일반 이미지 로더와 HEIC 로더를 완전히 분리
+- JPG / JPEG / PNG / WebP / GIF / BMP 확장자 및 파일 시그니처 감지
+- Android `content://` 파일 제공자의 빈 MIME / `application/octet-stream` 대응
+- 일반 이미지는 `createImageBitmap → FileReader DataURL → Blob URL` 3단계 fallback
+- HEIC 디코더는 HEIC 파일을 선택할 때만 lazy-load
+- GitHub Pages에서는 저장소 내 `vendor/heic-to.js` 우선, 실패 시 CDN fallback
+- 다운로드한 단일 HTML에서는 CDN HEIC decoder를 필요할 때만 로드
+- 이미지가 디코딩되면 효과 처리 전에 원본을 Canvas에 먼저 표시
+- 효과 렌더링 실패가 발생해도 사진 자체는 계속 표시
+- 실패 시 실제 오류 메시지를 화면에 표시
+- Samsung/Android 브라우저를 위해 `[hidden]{display:none!important}` 추가
