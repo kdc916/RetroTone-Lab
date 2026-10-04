@@ -67,7 +67,7 @@
 - WebGL 가속
 
 
-## v0.1.2
+## v0.1.1
 
 - HEIC / HEIF 파일 선택 지원
 - MIME이 비어 있거나 `application/octet-stream`으로 들어오는 `.heic/.heif`도 확장자로 감지
