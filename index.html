@@ -590,7 +590,7 @@
 
     const converted=await HeicTo({blob:file,type:'image/jpeg',quality:0.96});
     if(!(converted instanceof Blob))throw new Error('HEIC 변환 결과가 올바르지 않습니다');
-    return await decodeStandardImage(new File([converted],'converted.jpg',{type:'image/jpeg'}));
+    return await decodeStandardImage(converted);
   }
 
   function preparePreview(img,file){
