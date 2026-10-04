@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>RetroTone Lab v0.1.2</title>
+<title>RetroTone Lab v0.1.3</title>
 <style>
   :root{
     --bg:#0f1115; --panel:#171a21; --panel2:#1e222b; --line:#2c323e;
@@ -72,13 +72,45 @@
     .main{grid-template-columns:minmax(0,1fr) 330px}.left{display:none}.right{max-height:100%}
   }
   @media (max-width:760px){
-    header{position:sticky}.topbar{padding:8px}.brand small{display:none}.brand b{font-size:13px}.logo{width:30px;height:30px}
-    .main{display:flex;flex-direction:column;height:auto;padding:6px;gap:6px}
-    .left{display:none}.right{max-height:none;overflow:visible}.viewer{order:-1;position:sticky;top:54px;z-index:20;height:56vh;min-height:390px;max-height:620px}
-    .stage{padding:8px}.preset-dock{padding:6px 7px 8px}.preset-dock-head{margin-bottom:5px}.preset{min-width:112px;padding:7px 8px}
-    #previewCanvas{max-height:calc(56vh - 105px)}
-    .top-actions .ghost{display:none}.btn{padding:7px 9px;font-size:11px}.viewer-tools{top:8px;right:8px}.viewer-tools .btn:nth-child(2),.viewer-tools .btn:nth-child(3){display:none}
-    .settings-tabs{top:0}.section{padding:11px}.control{margin-bottom:10px}.drop{padding:12px}
+    :root{--mobile-stage-h:clamp(190px,28dvh,260px)}
+    html,body{height:auto;min-height:100%;overflow-x:hidden}
+    body{padding-bottom:env(safe-area-inset-bottom)}
+    .app{display:block;min-height:100dvh}
+    header{position:sticky;top:0;z-index:50;padding-top:env(safe-area-inset-top)}
+    .topbar{min-height:48px;padding:6px 8px;gap:6px}
+    .brand{gap:7px;min-width:0}.brand small{display:none}.brand b{font-size:13px;white-space:nowrap}.logo{width:26px;height:26px;border-radius:8px;flex:0 0 auto}
+    .top-actions{gap:5px}.top-actions .ghost{display:none}.top-actions .btn{min-height:36px;padding:7px 9px;font-size:11px;border-radius:9px}
+    .main{display:flex;flex-direction:column;width:100%;height:auto;margin:0;padding:0;gap:0}
+    .left{display:none}
+    .viewer{order:-1;position:sticky;top:calc(48px + env(safe-area-inset-top));z-index:20;width:100%;height:auto;max-height:none;border-radius:0;border-left:0;border-right:0;box-shadow:0 8px 24px rgba(0,0,0,.34);grid-template-rows:auto auto}
+    .stage{height:var(--mobile-stage-h);min-height:var(--mobile-stage-h);padding:6px 8px;overflow:hidden}
+    #previewCanvas{display:block;width:auto;height:auto;max-width:calc(100vw - 16px);max-height:calc(var(--mobile-stage-h) - 12px);border-radius:4px;box-shadow:0 8px 30px rgba(0,0,0,.42)}
+    .empty{padding:8px 18px}.empty .big{font-size:30px}.empty h2{font-size:14px;margin:5px 0 3px}.empty p{font-size:10px;line-height:1.4}
+    .viewer-tools{top:6px;right:6px;gap:4px;padding:4px;border-radius:10px}.viewer-tools .btn{padding:6px 8px;font-size:10px;border-radius:8px}.viewer-tools .btn:nth-child(3){display:none}
+    .preset-dock{padding:5px 7px 7px;border-radius:0}
+    .preset-dock-head{gap:5px;margin-bottom:5px;min-height:27px}.preset-dock-title{display:none}
+    .preset-tabs{gap:4px;flex:1}.preset-tab{padding:5px 8px;font-size:9px}
+    .look-now{max-width:86px;font-size:9px}
+    .preset-strip{gap:5px;padding-bottom:1px;scrollbar-width:none}.preset-strip::-webkit-scrollbar{display:none}
+    .preset{min-width:102px;max-width:122px;min-height:44px;padding:6px 8px;border-radius:9px}.preset b{font-size:10px}.preset span{font-size:8px}
+    .right{width:100%;max-height:none;overflow:visible;border-radius:0;border-left:0;border-right:0;box-shadow:none}
+    .settings-tabs{position:relative;top:auto;z-index:3;gap:4px;padding:7px 8px;background:#171a21}.settings-tab{min-height:40px;padding:6px 3px;font-size:10px;border-radius:8px}
+    .section{padding:12px 14px}.section h3{font-size:11px;margin-bottom:10px}.control{margin-bottom:11px}.control-head{font-size:11px;margin-bottom:5px}
+    input[type=range]{min-height:28px}
+    input[type=date],select{min-height:42px;font-size:12px}
+    .row{gap:6px}.quality-line{gap:6px}
+    .viewer.mobile-collapsed{--mobile-stage-h:118px}
+    .viewer.mobile-collapsed .empty p{display:none}
+  }
+  @media (max-width:390px){
+    :root{--mobile-stage-h:clamp(175px,26dvh,225px)}
+    .brand b{font-size:12px}.top-actions .btn{padding:6px 7px}
+    .preset{min-width:96px;max-width:112px}
+    .look-now{display:none}
+  }
+  @media (max-width:900px) and (orientation:landscape){
+    :root{--mobile-stage-h:clamp(145px,38dvh,220px)}
+    .viewer{position:relative;top:auto}
   }
 </style>
 </head>
@@ -86,7 +118,7 @@
 <div class="app">
   <header>
     <div class="topbar">
-      <div class="brand"><div class="logo"></div><div><b>RetroTone Lab</b><small>2000s · Retro · Film Color Tool v0.1.2</small></div></div>
+      <div class="brand"><div class="logo"></div><div><b>RetroTone Lab</b><small>2000s · Retro · Film Color Tool v0.1.3</small></div></div>
       <div class="top-actions">
         <button class="btn ghost" id="resetBtn">초기화</button>
         <button class="btn" id="openBtn">사진 열기</button>
@@ -123,7 +155,7 @@
       </div>
       <div class="viewer-tools">
         <button class="btn" id="compareBtn" disabled>원본 비교</button>
-        <button class="btn" id="fitBtn" disabled>맞춤</button>
+        <button class="btn" id="fitBtn" disabled>사진 작게</button>
         <button class="btn" id="randomBtn" disabled>랜덤</button>
       </div>
       <div class="preset-dock">
@@ -436,12 +468,30 @@
   const dz=$('#dropZone'); ['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add('drag')})); ['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove('drag')})); dz.addEventListener('drop',e=>loadFile(e.dataTransfer.files[0]));
   $('#resetBtn').onclick=()=>applyPreset('neutral'); $('#exportBtn').onclick=exportImage; $('#exportBtn2').onclick=exportImage;
   $('#randomBtn').onclick=()=>{randomSeed=(Math.random()*4294967295)>>>0;renderPreview();};
-  $('#fitBtn').onclick=()=>{const c=$('#previewCanvas');c.style.maxWidth='100%';c.style.maxHeight='calc(100vh - 215px)';};
+  $('#fitBtn').onclick=()=>{
+    const c=$('#previewCanvas'), viewer=document.querySelector('.viewer'), mobile=window.matchMedia('(max-width:760px)').matches;
+    if(mobile){
+      viewer.classList.toggle('mobile-collapsed');
+      $('#fitBtn').textContent=viewer.classList.contains('mobile-collapsed')?'사진 크게':'사진 작게';
+    }else{
+      c.style.maxWidth='100%';
+      c.style.maxHeight='calc(100vh - 215px)';
+    }
+  };
   const compare=$('#compareBtn'); const setCompare=v=>{if(!sourceImg)return;compareMode=v;renderPreview();}; compare.addEventListener('pointerdown',()=>setCompare(true));['pointerup','pointerleave','pointercancel'].forEach(ev=>compare.addEventListener(ev,()=>setCompare(false)));
   ['dateEnabled','dateInput','dateFormat','datePosition','dateOpacity'].forEach(id=>$('#'+id).addEventListener('input',()=>{if(id==='dateOpacity')$('#dateOpacityVal').textContent=$('#dateOpacity').value+'%';scheduleRender()}));
   $('#quality').addEventListener('input',()=>$('#qualityVal').textContent=$('#quality').value+'%');
   $('#presetWrap').addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){e.preventDefault();$('#presetWrap').scrollLeft+=e.deltaY;}},{passive:false});
   window.addEventListener('paste',e=>{const f=[...e.clipboardData.files].find(x=>x.type.startsWith('image/')||isHeicLike(x));if(f)loadFile(f)});
+  window.addEventListener('resize',()=>{
+    const viewer=document.querySelector('.viewer');
+    if(!window.matchMedia('(max-width:760px)').matches){
+      viewer.classList.remove('mobile-collapsed');
+      $('#fitBtn').textContent='맞춤';
+    }else{
+      $('#fitBtn').textContent=viewer.classList.contains('mobile-collapsed')?'사진 크게':'사진 작게';
+    }
+  });
 })();
 </script>
 </body>

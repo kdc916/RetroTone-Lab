@@ -1,8 +1,8 @@
 # RetroTone Lab — Development Handoff
 
 ## Version
-- v0.1.2
-- Preview-first / Low-scroll UI Patch
+- v0.1.3
+- Mobile Native Layout Patch
 
 ## Product Goal
 사진 한 장을 넣고 2000년대 디카, 레트로 인화사진, 필름 네거티브/일회용 카메라 분위기를 빠르게 만들 수 있는 로컬 브라우저 기반 이미지 스타일링 도구.
@@ -39,7 +39,7 @@
 - Left: compact image load + quick guide (desktop only)
 - Center: live preview + always-visible horizontal preset dock + compare
 - Right: tabbed controls (Tone / Retro / Date / Export)
-- Mobile: sticky preview + preset dock, settings scroll below
+- Mobile: compact sticky preview (dynamic dvh) + preset dock + tabbed controls; preview collapse/expand supported
 
 ## Stability Baseline
 v0.1.0을 초기 안정 기준으로 사용. 이후 기능 추가 시 아래 동작을 회귀시키지 말 것.
@@ -95,3 +95,15 @@ v0.1.0을 초기 안정 기준으로 사용. 이후 기능 추가 시 아래 동
 - 모바일 미리보기 sticky 처리: 세부 설정 스크롤 중에도 사진 유지
 - 760px 이하에서 좌측 업로드 패널 숨김(상단 사진 열기 버튼 사용)
 - 기존 HEIC/HEIF, 프리셋, 저장, 원본 비교 동작 유지
+
+
+## v0.1.3 Change Log
+- 모바일에서 PC형 56vh/390px 최소 높이 제거
+- `--mobile-stage-h: clamp(190px, 28dvh, 260px)` 도입
+- 작은 스마트폰(<=390px) 별도 크기 최적화
+- landscape 모바일은 preview sticky 해제
+- safe-area inset 적용
+- 모바일 프리셋/상단바/슬라이더/탭 터치 영역 최적화
+- body horizontal overflow 차단
+- 사진 작게/사진 크게 토글 추가
+- 기존 v0.1.2 preview-first 워크플로우 및 HEIC 지원 유지
