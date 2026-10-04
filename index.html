@@ -436,7 +436,7 @@
   const dz=$('#dropZone'); ['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add('drag')})); ['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove('drag')})); dz.addEventListener('drop',e=>loadFile(e.dataTransfer.files[0]));
   $('#resetBtn').onclick=()=>applyPreset('neutral'); $('#exportBtn').onclick=exportImage; $('#exportBtn2').onclick=exportImage;
   $('#randomBtn').onclick=()=>{randomSeed=(Math.random()*4294967295)>>>0;renderPreview();};
-  $('#fitBtn').onclick=()=>{const c=$('#previewCanvas');c.style.maxWidth='100%';c.style.maxHeight='calc(100vh - 120px)';};
+  $('#fitBtn').onclick=()=>{const c=$('#previewCanvas');c.style.maxWidth='100%';c.style.maxHeight='calc(100vh - 215px)';};
   const compare=$('#compareBtn'); const setCompare=v=>{if(!sourceImg)return;compareMode=v;renderPreview();}; compare.addEventListener('pointerdown',()=>setCompare(true));['pointerup','pointerleave','pointercancel'].forEach(ev=>compare.addEventListener(ev,()=>setCompare(false)));
   ['dateEnabled','dateInput','dateFormat','datePosition','dateOpacity'].forEach(id=>$('#'+id).addEventListener('input',()=>{if(id==='dateOpacity')$('#dateOpacityVal').textContent=$('#dateOpacity').value+'%';scheduleRender()}));
   $('#quality').addEventListener('input',()=>$('#qualityVal').textContent=$('#quality').value+'%');
