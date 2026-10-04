@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>RetroTone Lab v0.1.0</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#171a21; --panel2:#1e222b; --line:#2c323e;
+    --text:#f3f5f7; --muted:#9ca7b5; --accent:#ffb45a; --accent2:#7fd4ff;
+    --radius:16px; --shadow:0 14px 40px rgba(0,0,0,.28);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:linear-gradient(180deg,#0c0e12,#11141a 38%,#0d0f13);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans KR",sans-serif}
+  button,input,select{font:inherit}
+  button{cursor:pointer}
+  .app{min-height:100%;display:grid;grid-template-rows:auto 1fr}
+  header{position:sticky;top:0;z-index:30;backdrop-filter:blur(16px);background:rgba(15,17,21,.78);border-bottom:1px solid rgba(255,255,255,.06)}
+  .topbar{max-width:1700px;margin:auto;padding:12px 18px;display:flex;align-items:center;gap:12px}
+  .brand{display:flex;align-items:center;gap:10px;min-width:max-content}
+  .logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#ffc46d,#ff7e68 54%,#8f78ff);box-shadow:0 8px 25px rgba(255,155,93,.24)}
+  .brand b{font-size:15px;letter-spacing:.2px}.brand small{display:block;color:var(--muted);font-size:11px;margin-top:1px}
+  .top-actions{margin-left:auto;display:flex;gap:8px;align-items:center}
+  .btn{border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:9px 12px;border-radius:11px;transition:.18s ease}
+  .btn:hover{transform:translateY(-1px);border-color:#465064}.btn.primary{background:linear-gradient(135deg,#ffb861,#ff8e65);color:#17120d;border:none;font-weight:800}
+  .btn.ghost{background:transparent}.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+  .main{max-width:1700px;width:100%;margin:0 auto;display:grid;grid-template-columns:310px minmax(0,1fr) 330px;gap:12px;padding:12px;min-height:0}
+  .panel{background:rgba(23,26,33,.92);border:1px solid rgba(255,255,255,.065);border-radius:var(--radius);box-shadow:var(--shadow);min-height:0}
+  .left,.right{overflow:auto;max-height:calc(100vh - 76px)}
+  .section{padding:14px;border-bottom:1px solid rgba(255,255,255,.06)}.section:last-child{border-bottom:none}
+  .section h3{font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:#c4ccd7;margin:0 0 11px}
+  .drop{border:1.5px dashed #3c4452;border-radius:14px;padding:18px;text-align:center;background:#12151b;transition:.2s}
+  .drop.drag{border-color:var(--accent);background:#181711}.drop strong{display:block;font-size:14px}.drop span{font-size:12px;color:var(--muted)}
+  #fileInput{display:none}
+  .presets{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .preset{border:1px solid #2a303b;background:#151820;color:#e8edf3;padding:10px;border-radius:12px;text-align:left;min-height:66px}
+  .preset:hover{border-color:#4b5566}.preset.active{outline:2px solid var(--accent);border-color:transparent;background:#211b15}
+  .preset b{display:block;font-size:12px;margin-bottom:4px}.preset span{display:block;color:var(--muted);font-size:10px;line-height:1.35}
+  .category{margin-top:12px;color:#828e9d;font-size:10px;font-weight:800;letter-spacing:.12em}.category:first-child{margin-top:0}
+  .viewer{position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;background:radial-gradient(circle at 50% 40%,#242936,#101218 70%)}
+  .stage{position:relative;width:100%;height:100%;min-height:560px;display:flex;align-items:center;justify-content:center;padding:24px}
+  .checker{position:absolute;inset:0;opacity:.08;background-image:linear-gradient(45deg,#fff 25%,transparent 25%),linear-gradient(-45deg,#fff 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#fff 75%),linear-gradient(-45deg,transparent 75%,#fff 75%);background-size:24px 24px;background-position:0 0,0 12px,12px -12px,-12px 0}
+  #previewCanvas{position:relative;z-index:2;max-width:100%;max-height:calc(100vh - 120px);border-radius:6px;box-shadow:0 18px 70px rgba(0,0,0,.5);background:#111}
+  .empty{position:relative;z-index:3;text-align:center;color:#a8b1bf}.empty .big{font-size:44px;opacity:.7}.empty h2{font-size:18px;margin:10px 0 6px}.empty p{font-size:12px;margin:0;color:#788392}
+  .viewer-tools{position:absolute;z-index:10;left:50%;bottom:16px;transform:translateX(-50%);display:flex;gap:7px;background:rgba(10,12,16,.72);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.08);padding:7px;border-radius:14px}
+  .viewer-tools .btn{font-size:12px;padding:8px 10px}
+  .control{margin:0 0 13px}.control:last-child{margin-bottom:0}
+  .control-head{display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-bottom:6px}.control-head span:last-child{color:#bac3cf;font-variant-numeric:tabular-nums}
+  input[type=range]{width:100%;accent-color:#f2a85e}
+  input[type=text],input[type=date],select{width:100%;border:1px solid var(--line);background:#12151b;color:var(--text);border-radius:10px;padding:9px 10px;outline:none}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .toggle{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12px;margin:10px 0}
+  .toggle input{width:18px;height:18px;accent-color:#f2a85e}
+  .info{font-size:11px;color:var(--muted);line-height:1.55}
+  .kbd{display:inline-block;border:1px solid #3b4250;background:#101319;border-radius:6px;padding:1px 6px;color:#cbd3de;font-size:10px}
+  .mini{font-size:10px;color:#788392}
+  .divider{height:1px;background:rgba(255,255,255,.06);margin:12px 0}
+  .quality-line{display:flex;gap:8px;align-items:center}.quality-line select{flex:1}
+  @media (max-width:1150px){
+    .main{grid-template-columns:260px minmax(0,1fr)}.right{grid-column:1/-1;max-height:none;display:grid;grid-template-columns:1fr 1fr}.right .section{border-right:1px solid rgba(255,255,255,.06)}
+    .left{max-height:calc(100vh - 76px)}
+  }
+  @media (max-width:760px){
+    header{position:relative}.topbar{padding:10px}.brand small{display:none}.main{display:flex;flex-direction:column;padding:8px}.left,.right{max-height:none}.viewer{order:-1}.stage{min-height:55vh;padding:10px}.left{overflow:visible}.right{display:block}.presets{grid-template-columns:1fr 1fr}.top-actions .ghost{display:none}.btn{padding:8px 10px}.viewer-tools{bottom:10px}.viewer-tools .btn:nth-child(3){display:none}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="topbar">
+      <div class="brand"><div class="logo"></div><div><b>RetroTone Lab</b><small>2000s · Retro · Film Color Tool v0.1.0</small></div></div>
+      <div class="top-actions">
+        <button class="btn ghost" id="resetBtn">초기화</button>
+        <button class="btn" id="openBtn">사진 열기</button>
+        <button class="btn primary" id="exportBtn" disabled>내보내기</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="main">
+    <aside class="panel left">
+      <section class="section">
+        <h3>Photo</h3>
+        <label class="drop" id="dropZone" for="fileInput">
+          <strong>사진을 드롭하거나 클릭</strong>
+          <span>JPG · PNG · WEBP · HEIC는 브라우저 지원 시</span>
+        </label>
+        <input id="fileInput" type="file" accept="image/*" />
+      </section>
+      <section class="section">
+        <h3>Look Presets</h3>
+        <div id="presetWrap"></div>
+      </section>
+    </aside>
+
+    <section class="panel viewer">
+      <div class="checker"></div>
+      <div class="stage">
+        <canvas id="previewCanvas" hidden></canvas>
+        <div class="empty" id="emptyState">
+          <div class="big">◉</div>
+          <h2>사진 한 장이면 바로 시작</h2>
+          <p>2000년대 디카부터 빛바랜 필름까지 브라우저에서 바로 보정합니다.</p>
+        </div>
+      </div>
+      <div class="viewer-tools">
+        <button class="btn" id="compareBtn" disabled>누르고 원본 보기</button>
+        <button class="btn" id="fitBtn" disabled>화면 맞춤</button>
+        <button class="btn" id="randomBtn" disabled>미세 랜덤</button>
+      </div>
+    </section>
+
+    <aside class="panel right">
+      <section class="section">
+        <h3>Basic Tone</h3>
+        <div id="basicControls"></div>
+      </section>
+      <section class="section">
+        <h3>Retro Character</h3>
+        <div id="retroControls"></div>
+      </section>
+      <section class="section">
+        <h3>Date Stamp</h3>
+        <div class="toggle"><span>날짜 표시</span><input type="checkbox" id="dateEnabled"></div>
+        <input type="date" id="dateInput" />
+        <div class="row" style="margin-top:8px">
+          <select id="dateFormat"><option value="dot">2004. 08. 17</option><option value="slash">2004 / 08 / 17</option><option value="compact">'04 08 17</option></select>
+          <select id="datePosition"><option value="br">오른쪽 아래</option><option value="bl">왼쪽 아래</option></select>
+        </div>
+        <div class="control" style="margin-top:12px"><div class="control-head"><span>날짜 투명도</span><span id="dateOpacityVal">85%</span></div><input type="range" id="dateOpacity" min="10" max="100" value="85"></div>
+      </section>
+      <section class="section">
+        <h3>Export</h3>
+        <div class="quality-line">
+          <select id="exportFormat"><option value="image/jpeg">JPG</option><option value="image/png">PNG</option><option value="image/webp">WEBP</option></select>
+          <select id="exportScale"><option value="1">원본 크기</option><option value="0.5">50%</option><option value="0.25">25%</option></select>
+        </div>
+        <div class="control" style="margin-top:12px"><div class="control-head"><span>JPG/WEBP 품질</span><span id="qualityVal">92%</span></div><input type="range" id="quality" min="50" max="100" value="92"></div>
+        <button class="btn primary" id="exportBtn2" style="width:100%" disabled>보정본 저장</button>
+        <div class="divider"></div>
+        <div class="info">모든 처리는 기기 안에서 이루어집니다. 서버 업로드 없이 로컬 브라우저에서 처리합니다.</div>
+      </section>
+      <section class="section">
+        <h3>Tips</h3>
+        <div class="info">• <b>2000s CCD</b>: 대비와 파랑/마젠타 기운을 살짝 유지<br>• <b>Flash Party</b>: 플래시 특유의 하이라이트와 비네팅 강화<br>• <b>Film Print</b>: 블랙을 띄우고 입자·할레이션 추가<br>• 원본 비교는 <span class="kbd">누르고 원본 보기</span> 버튼을 길게 누르세요.</div>
+      </section>
+    </aside>
+  </main>
+</div>
+<script>
+(() => {
+  'use strict';
+  const $ = s => document.querySelector(s);
+  const clamp = (v,a=0,b=255)=>Math.max(a,Math.min(b,v));
+  const controls = {
+    exposure:{label:'노출',min:-100,max:100,val:0,fmt:v=>(v/50).toFixed(2)+' EV'},
+    contrast:{label:'대비',min:-100,max:100,val:0,fmt:v=>v},
+    saturation:{label:'채도',min:-100,max:100,val:0,fmt:v=>v},
+    warmth:{label:'색온도',min:-100,max:100,val:0,fmt:v=>v},
+    tint:{label:'틴트',min:-100,max:100,val:0,fmt:v=>v},
+    fade:{label:'페이드',min:0,max:100,val:0,fmt:v=>v},
+    shadows:{label:'그림자',min:-100,max:100,val:0,fmt:v=>v},
+    highlights:{label:'하이라이트',min:-100,max:100,val:0,fmt:v=>v},
+    grain:{label:'필름 그레인',min:0,max:100,val:0,fmt:v=>v},
+    vignette:{label:'비네팅',min:0,max:100,val:0,fmt:v=>v},
+    softness:{label:'소프트니스',min:0,max:100,val:0,fmt:v=>v},
+    halation:{label:'할레이션',min:0,max:100,val:0,fmt:v=>v},
+    chroma:{label:'색수차',min:0,max:20,val:0,fmt:v=>v+' px'},
+    dust:{label:'먼지 / 스크래치',min:0,max:100,val:0,fmt:v=>v},
+  };
+  const state = Object.fromEntries(Object.entries(controls).map(([k,c])=>[k,c.val]));
+  let activePreset='neutral', sourceImg=null, sourceName='photo', renderTimer=null, compareMode=false, randomSeed=92831;
+
+  const presets = [
+    {cat:'2000s DIGITAL',id:'neutral',name:'Clean Base',desc:'조정 전 기본 톤',v:{}},
+    {cat:'2000s DIGITAL',id:'ccd03',name:'CCD Compact 2003',desc:'쿨톤·높은 대비·살짝 강한 채도',v:{exposure:2,contrast:18,saturation:14,warmth:-9,tint:5,fade:2,highlights:-8,grain:8,vignette:9,chroma:2}},
+    {cat:'2000s DIGITAL',id:'flash07',name:'Flash Party 2007',desc:'직광 플래시·하이라이트·파티 사진',v:{exposure:12,contrast:25,saturation:5,warmth:-5,tint:7,highlights:14,shadows:-7,grain:13,vignette:28,halation:8,chroma:3}},
+    {cat:'2000s DIGITAL',id:'web04',name:'Minihome 2004',desc:'살짝 붉고 흐린 웹사진 감성',v:{exposure:4,contrast:-6,saturation:-8,warmth:10,tint:8,fade:18,shadows:8,highlights:-12,grain:10,softness:12}},
+    {cat:'2000s DIGITAL',id:'phone09',name:'Phone Cam 2009',desc:'초기 폰카 특유의 선명한 색 분리',v:{contrast:16,saturation:22,warmth:-3,tint:4,fade:3,grain:15,vignette:8,chroma:5}},
+
+    {cat:'FILM',id:'print200',name:'Color Print 200',desc:'따뜻하고 깨끗한 컬러 네거티브',v:{exposure:3,contrast:-5,saturation:6,warmth:12,tint:2,fade:11,shadows:5,highlights:-14,grain:18,vignette:10,halation:8,softness:4}},
+    {cat:'FILM',id:'consumer400',name:'Consumer 400',desc:'녹색 그림자·따뜻한 피부·생활 필름',v:{contrast:4,saturation:9,warmth:8,tint:-5,fade:15,shadows:7,highlights:-10,grain:28,vignette:16,halation:12,softness:5}},
+    {cat:'FILM',id:'disposable',name:'Disposable Flash',desc:'일회용 카메라 + 강한 플래시',v:{exposure:8,contrast:19,saturation:8,warmth:5,tint:2,fade:7,highlights:10,grain:36,vignette:34,halation:16,chroma:3,dust:8}},
+    {cat:'FILM',id:'coolneg',name:'Cool Negative',desc:'청록 그림자와 차분한 채도',v:{contrast:-2,saturation:-5,warmth:-12,tint:-4,fade:14,shadows:8,highlights:-13,grain:22,vignette:12,halation:6}},
+
+    {cat:'RETRO / AGED',id:'album',name:'Family Album',desc:'오래된 인화지의 바랜 따뜻함',v:{exposure:4,contrast:-16,saturation:-26,warmth:24,tint:4,fade:32,shadows:14,highlights:-20,grain:16,vignette:20,softness:10,dust:16}},
+    {cat:'RETRO / AGED',id:'y2k',name:'Y2K Pop',desc:'마젠타·시안이 도는 팝 레트로',v:{contrast:10,saturation:20,warmth:-5,tint:16,fade:10,grain:14,vignette:10,chroma:6}},
+    {cat:'RETRO / AGED',id:'expired',name:'Expired Film',desc:'색 틀어짐·페이드·거친 입자',v:{exposure:2,contrast:-8,saturation:-10,warmth:12,tint:14,fade:28,shadows:12,highlights:-20,grain:42,vignette:22,halation:18,chroma:4,dust:28}}
+  ];
+
+  function buildPresetUI(){
+    const wrap=$('#presetWrap'); wrap.innerHTML='';
+    let current=''; let grid=null;
+    presets.forEach(p=>{
+      if(p.cat!==current){current=p.cat; const c=document.createElement('div'); c.className='category'; c.textContent=current; wrap.appendChild(c); grid=document.createElement('div'); grid.className='presets'; wrap.appendChild(grid);}
+      const b=document.createElement('button'); b.className='preset'+(p.id===activePreset?' active':''); b.dataset.id=p.id;
+      b.innerHTML=`<b>${p.name}</b><span>${p.desc}</span>`; b.onclick=()=>applyPreset(p.id); grid.appendChild(b);
+    });
+  }
+  function buildControls(target, keys){
+    const root=$(target); root.innerHTML='';
+    keys.forEach(k=>{
+      const c=controls[k]; const el=document.createElement('div'); el.className='control';
+      el.innerHTML=`<div class="control-head"><span>${c.label}</span><span id="${k}Val">${c.fmt(state[k])}</span></div><input type="range" id="${k}" min="${c.min}" max="${c.max}" value="${state[k]}">`;
+      root.appendChild(el); const input=el.querySelector('input');
+      input.addEventListener('input',()=>{state[k]=+input.value; el.querySelector(`#${k}Val`).textContent=c.fmt(state[k]); activePreset='custom'; updatePresetActive(); scheduleRender();});
+    });
+  }
+  function updateControlUI(){
+    Object.keys(controls).forEach(k=>{const e=$('#'+k); if(e)e.value=state[k]; const v=$('#'+k+'Val'); if(v)v.textContent=controls[k].fmt(state[k]);});
+  }
+  function updatePresetActive(){document.querySelectorAll('.preset').forEach(b=>b.classList.toggle('active',b.dataset.id===activePreset));}
+  function applyPreset(id){
+    const p=presets.find(x=>x.id===id); if(!p)return;
+    Object.keys(controls).forEach(k=>state[k]=controls[k].val);
+    Object.assign(state,p.v); activePreset=id; updateControlUI(); updatePresetActive(); scheduleRender();
+  }
+
+  function seeded(){randomSeed=(randomSeed*1664525+1013904223)>>>0; return randomSeed/4294967296;}
+  function processPixels(imgData, values, seed=92831){
+    const d=imgData.data, exp=Math.pow(2,values.exposure/50), contrast=(259*(values.contrast+255))/(255*(259-values.contrast));
+    const sat=1+values.saturation/100; const warm=values.warmth*.34, tint=values.tint*.24, fade=values.fade/100;
+    const sh=values.shadows/100, hi=values.highlights/100, grain=values.grain/100;
+    randomSeed=seed;
+    for(let i=0;i<d.length;i+=4){
+      let r=d[i]*exp, g=d[i+1]*exp, b=d[i+2]*exp;
+      // temperature / tint
+      r += warm + tint*.45; b -= warm; g -= tint*.62;
+      // contrast
+      r=contrast*(r-128)+128; g=contrast*(g-128)+128; b=contrast*(b-128)+128;
+      let lum=.2126*r+.7152*g+.0722*b;
+      // saturation
+      r=lum+(r-lum)*sat; g=lum+(g-lum)*sat; b=lum+(b-lum)*sat;
+      // shadows / highlights
+      lum=.2126*r+.7152*g+.0722*b;
+      const shadowW=Math.pow(1-clamp(lum)/255,2), highW=Math.pow(clamp(lum)/255,2);
+      const shadowLift=sh*58*shadowW, highLift=hi*58*highW;
+      r+=shadowLift+highLift; g+=shadowLift+highLift; b+=shadowLift+highLift;
+      // faded blacks with subtle warm paper bias
+      if(fade>0){const lift=fade*34; r=r*(1-fade*.08)+lift*1.03; g=g*(1-fade*.10)+lift*.98; b=b*(1-fade*.12)+lift*.92;}
+      // subtle cross-process character from tint/warmth
+      const cross=(Math.abs(values.tint)+Math.abs(values.warmth))/200;
+      if(cross>.03){r += (r/255)*values.tint*.035; b -= ((255-b)/255)*values.tint*.025;}
+      if(grain>0){
+        const n=(seeded()+seeded()+seeded()-1.5) * (7+grain*26);
+        const mono=n, c=grain>0.35 ? (seeded()-.5)*grain*4 : 0;
+        r+=mono+c; g+=mono; b+=mono-c;
+      }
+      d[i]=clamp(r);d[i+1]=clamp(g);d[i+2]=clamp(b);
+    }
+    return imgData;
+  }
+
+  function applyChroma(canvas, amount){
+    if(amount<=0)return;
+    const ctx=canvas.getContext('2d',{willReadFrequently:true}), w=canvas.width,h=canvas.height;
+    const src=ctx.getImageData(0,0,w,h), out=new ImageData(w,h), s=src.data,o=out.data, shift=Math.max(1,Math.round(amount));
+    for(let y=0;y<h;y++) for(let x=0;x<w;x++){
+      const i=(y*w+x)*4, xr=Math.min(w-1,x+shift), xb=Math.max(0,x-shift);
+      const ir=(y*w+xr)*4, ib=(y*w+xb)*4;
+      o[i]=s[ir]; o[i+1]=s[i+1]; o[i+2]=s[ib+2]; o[i+3]=255;
+    }
+    ctx.putImageData(out,0,0);
+  }
+  function applySoftnessAndHalation(canvas, values){
+    const w=canvas.width,h=canvas.height, base=document.createElement('canvas'); base.width=w;base.height=h; base.getContext('2d').drawImage(canvas,0,0);
+    const ctx=canvas.getContext('2d');
+    if(values.softness>0){
+      const blur=Math.max(.2,values.softness/22); ctx.save(); ctx.globalAlpha=Math.min(.45,values.softness/180); ctx.filter=`blur(${blur}px)`; ctx.drawImage(base,0,0); ctx.restore();
+    }
+    if(values.halation>0){
+      const mask=document.createElement('canvas');mask.width=w;mask.height=h;const m=mask.getContext('2d');m.drawImage(base,0,0);
+      const id=m.getImageData(0,0,w,h),d=id.data;
+      for(let i=0;i<d.length;i+=4){const l=.2126*d[i]+.7152*d[i+1]+.0722*d[i+2];const a=Math.max(0,(l-185)/70);d[i]=255;d[i+1]=55;d[i+2]=20;d[i+3]=Math.round(a*255);}
+      m.putImageData(id,0,0);ctx.save();ctx.globalCompositeOperation='screen';ctx.globalAlpha=Math.min(.45,values.halation/130);ctx.filter=`blur(${Math.max(2,w/500)}px)`;ctx.drawImage(mask,0,0);ctx.restore();
+    }
+  }
+  function overlayVignette(ctx,w,h,amount){
+    if(amount<=0)return; const a=amount/100*.62; const g=ctx.createRadialGradient(w/2,h/2,Math.min(w,h)*.2,w/2,h/2,Math.max(w,h)*.72);g.addColorStop(.4,'rgba(0,0,0,0)');g.addColorStop(1,`rgba(0,0,0,${a})`);ctx.save();ctx.fillStyle=g;ctx.fillRect(0,0,w,h);ctx.restore();
+  }
+  function overlayDust(ctx,w,h,amount,seed=1927){
+    if(amount<=0)return; randomSeed=seed; const density=Math.round((w*h/1000000)*(amount*.55));ctx.save();ctx.globalAlpha=Math.min(.32,amount/200);ctx.lineCap='round';
+    for(let i=0;i<density;i++){const x=seeded()*w,y=seeded()*h,r=.4+seeded()*2.2*(w/1200);ctx.fillStyle=seeded()>.55?'#fff7e8':'#2a211a';ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();}
+    const scratches=Math.round(amount/24); for(let i=0;i<scratches;i++){ctx.strokeStyle=seeded()>.5?'#f4ead8':'#3b2e26';ctx.lineWidth=.35+seeded()*.8;ctx.beginPath();const x=seeded()*w,y=seeded()*h;ctx.moveTo(x,y);ctx.lineTo(x+(seeded()-.5)*18,y+20+seeded()*Math.min(220,h*.25));ctx.stroke();}ctx.restore();
+  }
+  function drawDate(ctx,w,h){
+    if(!$('#dateEnabled').checked)return; const raw=$('#dateInput').value||new Date().toISOString().slice(0,10); const [Y,M,D]=raw.split('-'); const fmt=$('#dateFormat').value;
+    const text=fmt==='slash'?`${Y} / ${M} / ${D}`:fmt==='compact'?`'${Y.slice(2)} ${M} ${D}`:`${Y}. ${M}. ${D}`;
+    const size=Math.max(13,Math.round(Math.min(w,h)*.027)); const pad=Math.round(size*.9);ctx.save();ctx.globalAlpha=+$('#dateOpacity').value/100;ctx.font=`700 ${size}px "Courier New", monospace`;ctx.textBaseline='bottom';ctx.shadowColor='rgba(90,28,0,.72)';ctx.shadowBlur=Math.max(1,size*.12);ctx.shadowOffsetX=Math.max(1,size*.06);ctx.shadowOffsetY=Math.max(1,size*.06);ctx.fillStyle='#ff9d45';
+    const tw=ctx.measureText(text).width; const x=$('#datePosition').value==='bl'?pad:w-tw-pad; const y=h-pad;ctx.fillText(text,x,y);ctx.restore();
+  }
+
+  function drawSourceTo(canvas,maxDim=1600){
+    if(!sourceImg)return; const ratio=Math.min(1,maxDim/Math.max(sourceImg.naturalWidth,sourceImg.naturalHeight)); canvas.width=Math.max(1,Math.round(sourceImg.naturalWidth*ratio)); canvas.height=Math.max(1,Math.round(sourceImg.naturalHeight*ratio)); const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(sourceImg,0,0,canvas.width,canvas.height);
+  }
+  function renderToCanvas(canvas, values, maxDim, seed){
+    drawSourceTo(canvas,maxDim); const ctx=canvas.getContext('2d',{willReadFrequently:true}),w=canvas.width,h=canvas.height;
+    if(compareMode)return;
+    let id=ctx.getImageData(0,0,w,h); id=processPixels(id,values,seed);ctx.putImageData(id,0,0);
+    applyChroma(canvas,Math.round(values.chroma*(w/1600)));
+    applySoftnessAndHalation(canvas,values);
+    overlayVignette(ctx,w,h,values.vignette); overlayDust(ctx,w,h,values.dust,seed+77); drawDate(ctx,w,h);
+  }
+  function scheduleRender(){clearTimeout(renderTimer);renderTimer=setTimeout(renderPreview,30);}
+  function renderPreview(){if(!sourceImg)return; const c=$('#previewCanvas');renderToCanvas(c,state,1600,randomSeed);}
+
+  async function loadFile(file){
+    if(!file || !file.type.startsWith('image/'))return;
+    const url=URL.createObjectURL(file), img=new Image(); img.onload=()=>{sourceImg=img;sourceName=(file.name||'photo').replace(/\.[^.]+$/,'');$('#previewCanvas').hidden=false;$('#emptyState').hidden=true;['#exportBtn','#exportBtn2','#compareBtn','#fitBtn','#randomBtn'].forEach(s=>$(s).disabled=false);renderPreview();URL.revokeObjectURL(url)};img.onerror=()=>{alert('이 이미지 형식을 브라우저가 열지 못했습니다. JPG/PNG/WEBP로 변환 후 다시 시도해 주세요.');URL.revokeObjectURL(url)};img.src=url;
+  }
+  async function exportImage(){
+    if(!sourceImg)return; const scale=+$('#exportScale').value, maxDim=Math.max(sourceImg.naturalWidth,sourceImg.naturalHeight)*scale; const c=document.createElement('canvas'); const oldCompare=compareMode;compareMode=false;renderToCanvas(c,state,maxDim,randomSeed);compareMode=oldCompare;
+    const type=$('#exportFormat').value,q=+$('#quality').value/100; const blob=await new Promise(res=>c.toBlob(res,type,q)); if(!blob)return alert('내보내기에 실패했습니다.'); const ext=type==='image/png'?'png':type==='image/webp'?'webp':'jpg'; const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${sourceName}_retrotone.${ext}`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+  }
+
+  buildPresetUI(); buildControls('#basicControls',['exposure','contrast','saturation','warmth','tint','fade','shadows','highlights']); buildControls('#retroControls',['grain','vignette','softness','halation','chroma','dust']);
+  $('#dateInput').value=new Date().toISOString().slice(0,10);
+  $('#openBtn').onclick=()=>$('#fileInput').click(); $('#fileInput').onchange=e=>loadFile(e.target.files[0]);
+  const dz=$('#dropZone'); ['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add('drag')})); ['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove('drag')})); dz.addEventListener('drop',e=>loadFile(e.dataTransfer.files[0]));
+  $('#resetBtn').onclick=()=>applyPreset('neutral'); $('#exportBtn').onclick=exportImage; $('#exportBtn2').onclick=exportImage;
+  $('#randomBtn').onclick=()=>{randomSeed=(Math.random()*4294967295)>>>0;renderPreview();};
+  $('#fitBtn').onclick=()=>{const c=$('#previewCanvas');c.style.maxWidth='100%';c.style.maxHeight='calc(100vh - 120px)';};
+  const compare=$('#compareBtn'); const setCompare=v=>{if(!sourceImg)return;compareMode=v;renderPreview();}; compare.addEventListener('pointerdown',()=>setCompare(true));['pointerup','pointerleave','pointercancel'].forEach(ev=>compare.addEventListener(ev,()=>setCompare(false)));
+  ['dateEnabled','dateInput','dateFormat','datePosition','dateOpacity'].forEach(id=>$('#'+id).addEventListener('input',()=>{if(id==='dateOpacity')$('#dateOpacityVal').textContent=$('#dateOpacity').value+'%';scheduleRender()}));
+  $('#quality').addEventListener('input',()=>$('#qualityVal').textContent=$('#quality').value+'%');
+  window.addEventListener('paste',e=>{const f=[...e.clipboardData.files].find(x=>x.type.startsWith('image/'));if(f)loadFile(f)});
+})();
+</script>
+</body>
+</html>
