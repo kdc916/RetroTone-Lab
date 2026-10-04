@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>RetroTone Lab v0.1.1</title>
+<title>RetroTone Lab v0.1.2</title>
 <style>
   :root{
     --bg:#0f1115; --panel:#171a21; --panel2:#1e222b; --line:#2c323e;
@@ -25,25 +25,30 @@
   .btn{border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:9px 12px;border-radius:11px;transition:.18s ease}
   .btn:hover{transform:translateY(-1px);border-color:#465064}.btn.primary{background:linear-gradient(135deg,#ffb861,#ff8e65);color:#17120d;border:none;font-weight:800}
   .btn.ghost{background:transparent}.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
-  .main{max-width:1700px;width:100%;margin:0 auto;display:grid;grid-template-columns:310px minmax(0,1fr) 330px;gap:12px;padding:12px;min-height:0}
+  .main{max-width:1700px;width:100%;height:calc(100vh - 65px);margin:0 auto;display:grid;grid-template-columns:220px minmax(0,1fr) 340px;gap:10px;padding:10px;min-height:0}
   .panel{background:rgba(23,26,33,.92);border:1px solid rgba(255,255,255,.065);border-radius:var(--radius);box-shadow:var(--shadow);min-height:0}
-  .left,.right{overflow:auto;max-height:calc(100vh - 76px)}
+  .left,.right{overflow:auto;max-height:100%}
   .section{padding:14px;border-bottom:1px solid rgba(255,255,255,.06)}.section:last-child{border-bottom:none}
   .section h3{font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:#c4ccd7;margin:0 0 11px}
   .drop{border:1.5px dashed #3c4452;border-radius:14px;padding:18px;text-align:center;background:#12151b;transition:.2s}
   .drop.drag{border-color:var(--accent);background:#181711}.drop strong{display:block;font-size:14px}.drop span{font-size:12px;color:var(--muted)}
   #fileInput{display:none}
-  .presets{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-  .preset{border:1px solid #2a303b;background:#151820;color:#e8edf3;padding:10px;border-radius:12px;text-align:left;min-height:66px}
-  .preset:hover{border-color:#4b5566}.preset.active{outline:2px solid var(--accent);border-color:transparent;background:#211b15}
-  .preset b{display:block;font-size:12px;margin-bottom:4px}.preset span{display:block;color:var(--muted);font-size:10px;line-height:1.35}
-  .category{margin-top:12px;color:#828e9d;font-size:10px;font-weight:800;letter-spacing:.12em}.category:first-child{margin-top:0}
-  .viewer{position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;background:radial-gradient(circle at 50% 40%,#242936,#101218 70%)}
-  .stage{position:relative;width:100%;height:100%;min-height:560px;display:flex;align-items:center;justify-content:center;padding:24px}
+  .preset-dock{position:relative;z-index:12;border-top:1px solid rgba(255,255,255,.07);background:rgba(12,14,18,.94);backdrop-filter:blur(16px);padding:8px 10px 10px}
+  .preset-dock-head{display:flex;align-items:center;gap:10px;margin-bottom:7px}
+  .preset-dock-title{font-size:10px;font-weight:800;letter-spacing:.12em;color:#9ca7b5;white-space:nowrap}
+  .preset-tabs{display:flex;gap:5px;overflow-x:auto;scrollbar-width:none}.preset-tabs::-webkit-scrollbar{display:none}
+  .preset-tab{border:1px solid #303744;background:#151820;color:#9ca7b5;border-radius:999px;padding:5px 9px;font-size:10px;white-space:nowrap}
+  .preset-tab.active{background:#2b2118;color:#ffd19a;border-color:#73512c}
+  .preset-strip{display:flex;gap:7px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x proximity;scrollbar-width:thin;padding-bottom:2px}
+  .preset{flex:0 0 auto;min-width:126px;max-width:156px;border:1px solid #2a303b;background:#151820;color:#e8edf3;padding:8px 10px;border-radius:11px;text-align:left;scroll-snap-align:start}
+  .preset:hover{border-color:#4b5566}.preset.active{outline:2px solid var(--accent);outline-offset:-1px;border-color:transparent;background:#211b15}
+  .preset b{display:block;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.preset span{display:block;color:#7f8997;font-size:9px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .viewer{position:relative;display:grid;grid-template-rows:minmax(0,1fr) auto;overflow:hidden;background:radial-gradient(circle at 50% 40%,#242936,#101218 70%)}
+  .stage{position:relative;width:100%;min-height:0;display:flex;align-items:center;justify-content:center;padding:18px}
   .checker{position:absolute;inset:0;opacity:.08;background-image:linear-gradient(45deg,#fff 25%,transparent 25%),linear-gradient(-45deg,#fff 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#fff 75%),linear-gradient(-45deg,transparent 75%,#fff 75%);background-size:24px 24px;background-position:0 0,0 12px,12px -12px,-12px 0}
-  #previewCanvas{position:relative;z-index:2;max-width:100%;max-height:calc(100vh - 120px);border-radius:6px;box-shadow:0 18px 70px rgba(0,0,0,.5);background:#111}
+  #previewCanvas{position:relative;z-index:2;max-width:100%;max-height:calc(100vh - 215px);border-radius:6px;box-shadow:0 18px 70px rgba(0,0,0,.5);background:#111}
   .empty{position:relative;z-index:3;text-align:center;color:#a8b1bf}.empty .big{font-size:44px;opacity:.7}.empty h2{font-size:18px;margin:10px 0 6px}.empty p{font-size:12px;margin:0;color:#788392}
-  .viewer-tools{position:absolute;z-index:10;left:50%;bottom:16px;transform:translateX(-50%);display:flex;gap:7px;background:rgba(10,12,16,.72);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.08);padding:7px;border-radius:14px}
+  .viewer-tools{position:absolute;z-index:15;right:12px;top:12px;display:flex;gap:7px;background:rgba(10,12,16,.72);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.08);padding:7px;border-radius:14px}
   .viewer-tools .btn{font-size:12px;padding:8px 10px}
   .control{margin:0 0 13px}.control:last-child{margin-bottom:0}
   .control-head{display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-bottom:6px}.control-head span:last-child{color:#bac3cf;font-variant-numeric:tabular-nums}
@@ -57,12 +62,23 @@
   .mini{font-size:10px;color:#788392}
   .divider{height:1px;background:rgba(255,255,255,.06);margin:12px 0}
   .quality-line{display:flex;gap:8px;align-items:center}.quality-line select{flex:1}
+  .settings-tabs{position:sticky;top:0;z-index:5;display:grid;grid-template-columns:repeat(4,1fr);gap:5px;padding:8px;background:rgba(23,26,33,.97);border-bottom:1px solid rgba(255,255,255,.06)}
+  .settings-tab{border:1px solid #303744;background:#12151b;color:#9ca7b5;border-radius:9px;padding:7px 4px;font-size:10px}
+  .settings-tab.active{background:#2b2118;color:#ffd19a;border-color:#73512c}
+  .settings-panel{display:none}.settings-panel.active{display:block}
+  .quick-tip{font-size:10px;color:#7f8997;line-height:1.55}
+  .look-now{margin-left:auto;font-size:10px;color:#ffd19a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:210px}
   @media (max-width:1150px){
-    .main{grid-template-columns:260px minmax(0,1fr)}.right{grid-column:1/-1;max-height:none;display:grid;grid-template-columns:1fr 1fr}.right .section{border-right:1px solid rgba(255,255,255,.06)}
-    .left{max-height:calc(100vh - 76px)}
+    .main{grid-template-columns:minmax(0,1fr) 330px}.left{display:none}.right{max-height:100%}
   }
   @media (max-width:760px){
-    header{position:relative}.topbar{padding:10px}.brand small{display:none}.main{display:flex;flex-direction:column;padding:8px}.left,.right{max-height:none}.viewer{order:-1}.stage{min-height:55vh;padding:10px}.left{overflow:visible}.right{display:block}.presets{grid-template-columns:1fr 1fr}.top-actions .ghost{display:none}.btn{padding:8px 10px}.viewer-tools{bottom:10px}.viewer-tools .btn:nth-child(3){display:none}
+    header{position:sticky}.topbar{padding:8px}.brand small{display:none}.brand b{font-size:13px}.logo{width:30px;height:30px}
+    .main{display:flex;flex-direction:column;height:auto;padding:6px;gap:6px}
+    .left{display:none}.right{max-height:none;overflow:visible}.viewer{order:-1;position:sticky;top:54px;z-index:20;height:56vh;min-height:390px;max-height:620px}
+    .stage{padding:8px}.preset-dock{padding:6px 7px 8px}.preset-dock-head{margin-bottom:5px}.preset{min-width:112px;padding:7px 8px}
+    #previewCanvas{max-height:calc(56vh - 105px)}
+    .top-actions .ghost{display:none}.btn{padding:7px 9px;font-size:11px}.viewer-tools{top:8px;right:8px}.viewer-tools .btn:nth-child(2),.viewer-tools .btn:nth-child(3){display:none}
+    .settings-tabs{top:0}.section{padding:11px}.control{margin-bottom:10px}.drop{padding:12px}
   }
 </style>
 </head>
@@ -70,7 +86,7 @@
 <div class="app">
   <header>
     <div class="topbar">
-      <div class="brand"><div class="logo"></div><div><b>RetroTone Lab</b><small>2000s · Retro · Film Color Tool v0.1.1</small></div></div>
+      <div class="brand"><div class="logo"></div><div><b>RetroTone Lab</b><small>2000s · Retro · Film Color Tool v0.1.2</small></div></div>
       <div class="top-actions">
         <button class="btn ghost" id="resetBtn">초기화</button>
         <button class="btn" id="openBtn">사진 열기</button>
@@ -90,8 +106,8 @@
         <input id="fileInput" type="file" accept="image/*,.heic,.heif,image/heic,image/heif,image/heic-sequence,image/heif-sequence" />
       </section>
       <section class="section">
-        <h3>Look Presets</h3>
-        <div id="presetWrap"></div>
+        <h3>Quick Guide</h3>
+        <div class="quick-tip">사진을 연 뒤 중앙 사진 아래 <b>LOOK PRESETS</b>에서 색감을 바로 바꿀 수 있습니다.<br><br>세부 조절은 오른쪽 탭에서 필요한 항목만 열어 사용하세요.</div>
       </section>
     </aside>
 
@@ -106,22 +122,36 @@
         </div>
       </div>
       <div class="viewer-tools">
-        <button class="btn" id="compareBtn" disabled>누르고 원본 보기</button>
-        <button class="btn" id="fitBtn" disabled>화면 맞춤</button>
-        <button class="btn" id="randomBtn" disabled>미세 랜덤</button>
+        <button class="btn" id="compareBtn" disabled>원본 비교</button>
+        <button class="btn" id="fitBtn" disabled>맞춤</button>
+        <button class="btn" id="randomBtn" disabled>랜덤</button>
+      </div>
+      <div class="preset-dock">
+        <div class="preset-dock-head">
+          <span class="preset-dock-title">LOOK PRESETS</span>
+          <div class="preset-tabs" id="presetTabs"></div>
+          <span class="look-now" id="activeLookName">Clean Base</span>
+        </div>
+        <div id="presetWrap" class="preset-strip"></div>
       </div>
     </section>
 
     <aside class="panel right">
-      <section class="section">
+      <div class="settings-tabs">
+        <button class="settings-tab active" data-settings="tone">톤</button>
+        <button class="settings-tab" data-settings="retro">필름 질감</button>
+        <button class="settings-tab" data-settings="date">날짜</button>
+        <button class="settings-tab" data-settings="export">저장</button>
+      </div>
+      <section class="section settings-panel active" data-panel="tone">
         <h3>Basic Tone</h3>
         <div id="basicControls"></div>
       </section>
-      <section class="section">
+      <section class="section settings-panel" data-panel="retro">
         <h3>Retro Character</h3>
         <div id="retroControls"></div>
       </section>
-      <section class="section">
+      <section class="section settings-panel" data-panel="date">
         <h3>Date Stamp</h3>
         <div class="toggle"><span>날짜 표시</span><input type="checkbox" id="dateEnabled"></div>
         <input type="date" id="dateInput" />
@@ -131,7 +161,7 @@
         </div>
         <div class="control" style="margin-top:12px"><div class="control-head"><span>날짜 투명도</span><span id="dateOpacityVal">85%</span></div><input type="range" id="dateOpacity" min="10" max="100" value="85"></div>
       </section>
-      <section class="section">
+      <section class="section settings-panel" data-panel="export">
         <h3>Export</h3>
         <div class="quality-line">
           <select id="exportFormat"><option value="image/jpeg">JPG</option><option value="image/png">PNG</option><option value="image/webp">WEBP</option></select>
@@ -140,11 +170,7 @@
         <div class="control" style="margin-top:12px"><div class="control-head"><span>JPG/WEBP 품질</span><span id="qualityVal">92%</span></div><input type="range" id="quality" min="50" max="100" value="92"></div>
         <button class="btn primary" id="exportBtn2" style="width:100%" disabled>보정본 저장</button>
         <div class="divider"></div>
-        <div class="info">모든 처리는 기기 안에서 이루어집니다. HEIC/HEIF도 브라우저 내부에서 JPEG로 디코딩한 뒤 처리하며, 사진 파일 자체는 서버로 업로드하지 않습니다.</div>
-      </section>
-      <section class="section">
-        <h3>Tips</h3>
-        <div class="info">• <b>2000s CCD</b>: 대비와 파랑/마젠타 기운을 살짝 유지<br>• <b>Flash Party</b>: 플래시 특유의 하이라이트와 비네팅 강화<br>• <b>Film Print</b>: 블랙을 띄우고 입자·할레이션 추가<br>• 원본 비교는 <span class="kbd">누르고 원본 보기</span> 버튼을 길게 누르세요.</div>
+        <div class="info">HEIC/HEIF 포함 모든 사진 처리는 브라우저 안에서 진행됩니다. 이미지 파일 자체는 서버로 업로드하지 않습니다.</div>
       </section>
     </aside>
   </main>
@@ -191,13 +217,21 @@
     {cat:'RETRO / AGED',id:'expired',name:'Expired Film',desc:'색 틀어짐·페이드·거친 입자',v:{exposure:2,contrast:-8,saturation:-10,warmth:12,tint:14,fade:28,shadows:12,highlights:-20,grain:42,vignette:22,halation:18,chroma:4,dust:28}}
   ];
 
+  let presetCategory='ALL';
   function buildPresetUI(){
-    const wrap=$('#presetWrap'); wrap.innerHTML='';
-    let current=''; let grid=null;
-    presets.forEach(p=>{
-      if(p.cat!==current){current=p.cat; const c=document.createElement('div'); c.className='category'; c.textContent=current; wrap.appendChild(c); grid=document.createElement('div'); grid.className='presets'; wrap.appendChild(grid);}
-      const b=document.createElement('button'); b.className='preset'+(p.id===activePreset?' active':''); b.dataset.id=p.id;
-      b.innerHTML=`<b>${p.name}</b><span>${p.desc}</span>`; b.onclick=()=>applyPreset(p.id); grid.appendChild(b);
+    const wrap=$('#presetWrap'), tabs=$('#presetTabs');
+    wrap.innerHTML=''; tabs.innerHTML='';
+    const cats=['ALL',...new Set(presets.map(p=>p.cat))];
+    cats.forEach(cat=>{
+      const t=document.createElement('button'); t.className='preset-tab'+(cat===presetCategory?' active':'');
+      t.textContent=cat==='2000s DIGITAL'?'2000s':cat==='RETRO / AGED'?'RETRO':cat;
+      t.onclick=()=>{presetCategory=cat;buildPresetUI();};
+      tabs.appendChild(t);
+    });
+    presets.filter(p=>presetCategory==='ALL'||p.cat===presetCategory).forEach(p=>{
+      const b=document.createElement('button'); b.className='preset'+(p.id===activePreset?' active':''); b.dataset.id=p.id; b.title=p.desc;
+      b.innerHTML=`<b>${p.name}</b><span>${p.cat==='2000s DIGITAL'?'DIGITAL':p.cat==='RETRO / AGED'?'RETRO':'FILM'}</span>`;
+      b.onclick=()=>applyPreset(p.id); wrap.appendChild(b);
     });
   }
   function buildControls(target, keys){
@@ -212,11 +246,15 @@
   function updateControlUI(){
     Object.keys(controls).forEach(k=>{const e=$('#'+k); if(e)e.value=state[k]; const v=$('#'+k+'Val'); if(v)v.textContent=controls[k].fmt(state[k]);});
   }
-  function updatePresetActive(){document.querySelectorAll('.preset').forEach(b=>b.classList.toggle('active',b.dataset.id===activePreset));}
+  function updatePresetActive(){
+    document.querySelectorAll('.preset').forEach(b=>b.classList.toggle('active',b.dataset.id===activePreset));
+    const p=presets.find(x=>x.id===activePreset);
+    const label=$('#activeLookName'); if(label)label.textContent=p?p.name:(activePreset==='custom'?'Custom':'');
+  }
   function applyPreset(id){
     const p=presets.find(x=>x.id===id); if(!p)return;
     Object.keys(controls).forEach(k=>state[k]=controls[k].val);
-    Object.assign(state,p.v); activePreset=id; updateControlUI(); updatePresetActive(); scheduleRender();
+    Object.assign(state,p.v); activePreset=id; updateControlUI(); updatePresetActive(); scheduleRender(); const active=document.querySelector('.preset.active'); if(active)active.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
   }
 
   function seeded(){randomSeed=(randomSeed*1664525+1013904223)>>>0; return randomSeed/4294967296;}
@@ -389,6 +427,10 @@
   }
 
   buildPresetUI(); buildControls('#basicControls',['exposure','contrast','saturation','warmth','tint','fade','shadows','highlights']); buildControls('#retroControls',['grain','vignette','softness','halation','chroma','dust']);
+  document.querySelectorAll('.settings-tab').forEach(tab=>tab.addEventListener('click',()=>{
+    document.querySelectorAll('.settings-tab').forEach(x=>x.classList.toggle('active',x===tab));
+    document.querySelectorAll('.settings-panel').forEach(p=>p.classList.toggle('active',p.dataset.panel===tab.dataset.settings));
+  }));
   $('#dateInput').value=new Date().toISOString().slice(0,10);
   $('#openBtn').onclick=()=>$('#fileInput').click(); $('#fileInput').onchange=e=>loadFile(e.target.files[0]);
   const dz=$('#dropZone'); ['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add('drag')})); ['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove('drag')})); dz.addEventListener('drop',e=>loadFile(e.dataTransfer.files[0]));
@@ -398,6 +440,7 @@
   const compare=$('#compareBtn'); const setCompare=v=>{if(!sourceImg)return;compareMode=v;renderPreview();}; compare.addEventListener('pointerdown',()=>setCompare(true));['pointerup','pointerleave','pointercancel'].forEach(ev=>compare.addEventListener(ev,()=>setCompare(false)));
   ['dateEnabled','dateInput','dateFormat','datePosition','dateOpacity'].forEach(id=>$('#'+id).addEventListener('input',()=>{if(id==='dateOpacity')$('#dateOpacityVal').textContent=$('#dateOpacity').value+'%';scheduleRender()}));
   $('#quality').addEventListener('input',()=>$('#qualityVal').textContent=$('#quality').value+'%');
+  $('#presetWrap').addEventListener('wheel',e=>{if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){e.preventDefault();$('#presetWrap').scrollLeft+=e.deltaY;}},{passive:false});
   window.addEventListener('paste',e=>{const f=[...e.clipboardData.files].find(x=>x.type.startsWith('image/')||isHeicLike(x));if(f)loadFile(f)});
 })();
 </script>

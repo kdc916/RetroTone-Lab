@@ -1,8 +1,8 @@
 # RetroTone Lab — Development Handoff
 
 ## Version
-- v0.1.1
-- HEIC / HEIF Import Patch
+- v0.1.2
+- Preview-first / Low-scroll UI Patch
 
 ## Product Goal
 사진 한 장을 넣고 2000년대 디카, 레트로 인화사진, 필름 네거티브/일회용 카메라 분위기를 빠르게 만들 수 있는 로컬 브라우저 기반 이미지 스타일링 도구.
@@ -36,10 +36,10 @@
 18. Export canvas render
 
 ## UI Structure
-- Left: image load + presets
-- Center: live preview + compare
-- Right: detailed controls + export
-- Mobile: preview first, controls stacked vertically
+- Left: compact image load + quick guide (desktop only)
+- Center: live preview + always-visible horizontal preset dock + compare
+- Right: tabbed controls (Tone / Retro / Date / Export)
+- Mobile: sticky preview + preset dock, settings scroll below
 
 ## Stability Baseline
 v0.1.0을 초기 안정 기준으로 사용. 이후 기능 추가 시 아래 동작을 회귀시키지 말 것.
@@ -84,3 +84,14 @@ v0.1.0을 초기 안정 기준으로 사용. 이후 기능 추가 시 아래 동
 - HEIC/HEIF → JPEG(quality 0.96) → 기존 Canvas 파이프라인
 - decoder 실패 시 브라우저 native image decode fallback
 - HEIC 로딩 상태 UI 및 오류 메시지 개선
+
+
+## v0.1.2 Change Log
+- Look Presets를 중앙 미리보기 하단 도크로 이동
+- 프리셋 카테고리 필터 탭(ALL / 2000s / FILM / RETRO) 추가
+- 프리셋 가로 스크롤 UI 및 선택 항목 자동 중앙 이동
+- 우측 긴 세로 설정을 4개 탭으로 분리
+- 데스크톱에서 편집 영역을 viewport 높이에 고정하여 body 스크롤 최소화
+- 모바일 미리보기 sticky 처리: 세부 설정 스크롤 중에도 사진 유지
+- 760px 이하에서 좌측 업로드 패널 숨김(상단 사진 열기 버튼 사용)
+- 기존 HEIC/HEIF, 프리셋, 저장, 원본 비교 동작 유지
