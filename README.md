@@ -1,4 +1,4 @@
-# RetroTone Lab v0.1.5
+# RetroTone Lab v0.1.6
 
 브라우저에서 사진을 불러와 2000년대 디지털 카메라, 레트로, 필름 인화 색감을 빠르게 만드는 단일 HTML 도구입니다.
 
@@ -126,3 +126,14 @@
 - 효과 렌더링 실패가 발생해도 사진 자체는 계속 표시
 - 실패 시 실제 오류 메시지를 화면에 표시
 - Samsung/Android 브라우저를 위해 `[hidden]{display:none!important}` 추가
+
+
+## v0.1.6
+
+- 실제 사용자 JPG 2종(1536×1027 sRGB, 1536×1152 Display P3)으로 모바일 브라우저 재현 테스트
+- 이미지 디코딩은 정상인데 모바일 Grid의 implicit column이 프리셋 목록의 min-content 폭(약 1253px)까지 확장되는 문제 확인
+- 그 결과 preview canvas가 390px 화면에서 x≈471px 바깥으로 밀려 “이미지가 안 열린 것처럼” 보이던 버그 수정
+- `.viewer`에 `grid-template-columns:minmax(0,1fr)` 및 `min-width:0` 적용
+- `.stage`, `.preset-dock`, `.preset-dock-head`, `.preset-tabs`, `.preset-strip`의 min/max width 제한
+- 모바일 viewer에 `max-width:100vw` 강제
+- 패치 후 두 테스트 이미지 모두 canvas가 화면 안에 위치하고 실제 픽셀 표시 확인

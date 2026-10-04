@@ -1,8 +1,8 @@
 # RetroTone Lab — Development Handoff
 
 ## Version
-- v0.1.5
-- Robust Image Loader / HEIC Isolation
+- v0.1.6
+- Mobile Grid Overflow / Preview Visibility Fix
 
 ## Product Goal
 사진 한 장을 넣고 2000년대 디카, 레트로 인화사진, 필름 네거티브/일회용 카메라 분위기를 빠르게 만들 수 있는 로컬 브라우저 기반 이미지 스타일링 도구.
@@ -129,3 +129,15 @@ v0.1.0을 초기 안정 기준으로 사용. 이후 기능 추가 시 아래 동
 - Paint source image before effects so rendering regressions cannot hide successful loads
 - User-visible exact load/render error message
 - hidden attribute CSS hardening for Samsung/Android
+
+
+## v0.1.6 Change Log
+- Reproduced with supplied JPGs: image decode/render succeeded but canvas was off-screen
+- Root cause: horizontal preset strip expanded the viewer's implicit CSS Grid column to ~1253px
+- On a 390px viewport the canvas X position became ~471px, so only checker background was visible
+- Added explicit grid-template-columns:minmax(0,1fr)
+- Added min-width:0 / max-width:100% constraints to stage and preset dock hierarchy
+- Added max-width:100vw to mobile viewer
+- Regression test after fix:
+  - 19357.jpg: canvas rect x≈39.9, width≈310.2, center pixel RGBA 63/127/77/255
+  - 19564.jpg: canvas rect x≈56.7, width≈276.6, center pixel RGBA 66/67/72/255
