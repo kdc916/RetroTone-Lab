@@ -1,8 +1,8 @@
 # RetroTone Lab — Development Handoff
 
 ## Version
-- v0.1.3
-- Mobile Native Layout Patch
+- v0.1.4
+- Offline HEIC Decoder / Android Fix
 
 ## Product Goal
 사진 한 장을 넣고 2000년대 디카, 레트로 인화사진, 필름 네거티브/일회용 카메라 분위기를 빠르게 만들 수 있는 로컬 브라우저 기반 이미지 스타일링 도구.
@@ -10,7 +10,7 @@
 ## Architecture
 - 단일 `index.html`
 - 기본 이미지 처리는 외부 런타임 라이브러리 없음
-- HEIC/HEIF 입력 시 `heic-to 1.5.2` IIFE를 jsDelivr CDN에서 로드해 클라이언트 디코딩
+- HEIC/HEIF 입력 시 vendored `heic-to 1.6.5` IIFE (`vendor/heic-to.js`)로 클라이언트 디코딩
 - Canvas 2D 기반
 - 서버 통신 없음
 - 원본 이미지는 브라우저 메모리에서만 처리
@@ -107,3 +107,13 @@ v0.1.0을 초기 안정 기준으로 사용. 이후 기능 추가 시 아래 동
 - body horizontal overflow 차단
 - 사진 작게/사진 크게 토글 추가
 - 기존 v0.1.2 preview-first 워크플로우 및 HEIC 지원 유지
+
+
+## v0.1.4 Change Log
+- CDN HEIC decoder 제거, same-origin vendored decoder 사용
+- heic-to 1.6.5 / libheif 1.23.5
+- Android browser에서 HEIC -> ImageBitmap 우선 변환
+- JPEG Blob fallback
+- visible HEIC progress/error status overlay
+- source dimensions를 naturalWidth/width 양쪽 지원
+- standalone HTML에는 decoder inline

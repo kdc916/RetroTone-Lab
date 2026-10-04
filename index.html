@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>RetroTone Lab v0.1.3</title>
+<title>RetroTone Lab v0.1.4</title>
 <style>
   :root{
     --bg:#0f1115; --panel:#171a21; --panel2:#1e222b; --line:#2c323e;
@@ -47,6 +47,11 @@
   .stage{position:relative;width:100%;min-height:0;display:flex;align-items:center;justify-content:center;padding:18px}
   .checker{position:absolute;inset:0;opacity:.08;background-image:linear-gradient(45deg,#fff 25%,transparent 25%),linear-gradient(-45deg,#fff 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#fff 75%),linear-gradient(-45deg,transparent 75%,#fff 75%);background-size:24px 24px;background-position:0 0,0 12px,12px -12px,-12px 0}
   #previewCanvas{position:relative;z-index:2;max-width:100%;max-height:calc(100vh - 215px);border-radius:6px;box-shadow:0 18px 70px rgba(0,0,0,.5);background:#111}
+  .load-status{position:absolute;z-index:18;left:50%;top:50%;transform:translate(-50%,-50%);min-width:190px;max-width:min(86%,340px);padding:14px 16px;border-radius:14px;background:rgba(10,12,16,.9);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(14px);text-align:center;box-shadow:0 12px 38px rgba(0,0,0,.42)}
+  .load-status b{display:block;font-size:13px;margin-top:8px}.load-status span{display:block;font-size:10px;color:#9ca7b5;line-height:1.45;margin-top:4px}
+  .load-status.error{border-color:rgba(255,105,105,.45);background:rgba(35,14,16,.94)}.load-status.error .load-spinner{display:none}
+  .load-spinner{width:22px;height:22px;margin:0 auto;border:2px solid rgba(255,255,255,.16);border-top-color:#ffad61;border-radius:50%;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
   .empty{position:relative;z-index:3;text-align:center;color:#a8b1bf}.empty .big{font-size:44px;opacity:.7}.empty h2{font-size:18px;margin:10px 0 6px}.empty p{font-size:12px;margin:0;color:#788392}
   .viewer-tools{position:absolute;z-index:15;right:12px;top:12px;display:flex;gap:7px;background:rgba(10,12,16,.72);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.08);padding:7px;border-radius:14px}
   .viewer-tools .btn{font-size:12px;padding:8px 10px}
@@ -85,7 +90,7 @@
     .viewer{order:-1;position:sticky;top:calc(48px + env(safe-area-inset-top));z-index:20;width:100%;height:auto;max-height:none;border-radius:0;border-left:0;border-right:0;box-shadow:0 8px 24px rgba(0,0,0,.34);grid-template-rows:auto auto}
     .stage{height:var(--mobile-stage-h);min-height:var(--mobile-stage-h);padding:6px 8px;overflow:hidden}
     #previewCanvas{display:block;width:auto;height:auto;max-width:calc(100vw - 16px);max-height:calc(var(--mobile-stage-h) - 12px);border-radius:4px;box-shadow:0 8px 30px rgba(0,0,0,.42)}
-    .empty{padding:8px 18px}.empty .big{font-size:30px}.empty h2{font-size:14px;margin:5px 0 3px}.empty p{font-size:10px;line-height:1.4}
+    .load-status{padding:11px 13px;min-width:170px}.load-status b{font-size:12px}.empty{padding:8px 18px}.empty .big{font-size:30px}.empty h2{font-size:14px;margin:5px 0 3px}.empty p{font-size:10px;line-height:1.4}
     .viewer-tools{top:6px;right:6px;gap:4px;padding:4px;border-radius:10px}.viewer-tools .btn{padding:6px 8px;font-size:10px;border-radius:8px}.viewer-tools .btn:nth-child(3){display:none}
     .preset-dock{padding:5px 7px 7px;border-radius:0}
     .preset-dock-head{gap:5px;margin-bottom:5px;min-height:27px}.preset-dock-title{display:none}
@@ -118,7 +123,7 @@
 <div class="app">
   <header>
     <div class="topbar">
-      <div class="brand"><div class="logo"></div><div><b>RetroTone Lab</b><small>2000s · Retro · Film Color Tool v0.1.3</small></div></div>
+      <div class="brand"><div class="logo"></div><div><b>RetroTone Lab</b><small>2000s · Retro · Film Color Tool v0.1.4</small></div></div>
       <div class="top-actions">
         <button class="btn ghost" id="resetBtn">초기화</button>
         <button class="btn" id="openBtn">사진 열기</button>
@@ -147,6 +152,11 @@
       <div class="checker"></div>
       <div class="stage">
         <canvas id="previewCanvas" hidden></canvas>
+        <div class="load-status" id="loadStatus" hidden>
+          <div class="load-spinner"></div>
+          <b id="loadStatusTitle">사진 불러오는 중…</b>
+          <span id="loadStatusText"></span>
+        </div>
         <div class="empty" id="emptyState">
           <div class="big">◉</div>
           <h2>사진 한 장이면 바로 시작</h2>
@@ -207,7 +217,7 @@
     </aside>
   </main>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/heic-to@1.5.2/dist/iife/heic-to.js"></script>
+<script src="./vendor/heic-to.js"></script>
 <script>
 (() => {
   'use strict';
@@ -364,7 +374,7 @@
   }
 
   function drawSourceTo(canvas,maxDim=1600){
-    if(!sourceImg)return; const ratio=Math.min(1,maxDim/Math.max(sourceImg.naturalWidth,sourceImg.naturalHeight)); canvas.width=Math.max(1,Math.round(sourceImg.naturalWidth*ratio)); canvas.height=Math.max(1,Math.round(sourceImg.naturalHeight*ratio)); const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(sourceImg,0,0,canvas.width,canvas.height);
+    if(!sourceImg)return; const sw=sourceImg.naturalWidth||sourceImg.width, sh=sourceImg.naturalHeight||sourceImg.height; if(!sw||!sh)throw new Error('Invalid source dimensions'); const ratio=Math.min(1,maxDim/Math.max(sw,sh)); canvas.width=Math.max(1,Math.round(sw*ratio)); canvas.height=Math.max(1,Math.round(sh*ratio)); const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(sourceImg,0,0,canvas.width,canvas.height);
   }
   function renderToCanvas(canvas, values, maxDim, seed){
     drawSourceTo(canvas,maxDim); const ctx=canvas.getContext('2d',{willReadFrequently:true}),w=canvas.width,h=canvas.height;
@@ -383,6 +393,20 @@
     const type=(file.type||'').toLowerCase();
     return /\.(heic|heif)$/i.test(name) || type.includes('heic') || type.includes('heif');
   }
+  function showLoadStatus(title,text='',error=false){
+    const box=$('#loadStatus');
+    if(!box)return;
+    box.hidden=false;
+    box.classList.toggle('error',!!error);
+    $('#loadStatusTitle').textContent=title;
+    $('#loadStatusText').textContent=text;
+  }
+  function hideLoadStatus(delay=0){
+    const box=$('#loadStatus');
+    if(!box)return;
+    if(delay)setTimeout(()=>{box.hidden=true;box.classList.remove('error');},delay);
+    else{box.hidden=true;box.classList.remove('error');}
+  }
   function setLoadState(text,busy=false){
     const strong=$('#dropZone strong');
     if(strong)strong.textContent=text;
@@ -400,53 +424,81 @@
       img.src=url;
     });
   }
+  async function decodeHeic(file){
+    if(typeof window.HeicTo!=='function'){
+      throw new Error('HEIC decoder was not loaded');
+    }
+
+    // Confirm the file through the decoder as well as the extension/MIME check.
+    if(typeof window.HeicTo.isHeic==='function'){
+      const confirmed=await window.HeicTo.isHeic(file);
+      if(!confirmed)throw new Error('Selected file is not a valid HEIC/HEIF image');
+    }
+
+    // Bitmap avoids a second JPEG <img> decode on Android browsers.
+    try{
+      const bitmap=await window.HeicTo({
+        blob:file,
+        type:'bitmap'
+      });
+      if(bitmap && bitmap.width>0 && bitmap.height>0)return bitmap;
+    }catch(bitmapError){
+      console.warn('HEIC bitmap decode failed, trying JPEG blob:',bitmapError);
+    }
+
+    let converted=await window.HeicTo({
+      blob:file,
+      type:'image/jpeg',
+      quality:0.96
+    });
+    if(Array.isArray(converted))converted=converted[0];
+    if(!(converted instanceof Blob))throw new Error('HEIC decoder returned an invalid result');
+    return await blobToImage(converted);
+  }
   function finishLoadedImage(img,file){
+    const sw=img.naturalWidth||img.width, sh=img.naturalHeight||img.height;
+    if(!sw||!sh)throw new Error('Decoded image has no valid dimensions');
+    if(sourceImg && typeof sourceImg.close==='function'){
+      try{sourceImg.close();}catch(_){}
+    }
     sourceImg=img;
     sourceName=(file.name||'photo').replace(/\.[^.]+$/,'');
     $('#previewCanvas').hidden=false;
     $('#emptyState').hidden=true;
     ['#exportBtn','#exportBtn2','#compareBtn','#fitBtn','#randomBtn'].forEach(s=>$(s).disabled=false);
     renderPreview();
+    showLoadStatus('불러오기 완료',`${sw} × ${sh}`);
+    hideLoadStatus(650);
   }
   async function loadFile(file){
     if(!file)return;
     const heic=isHeicLike(file);
     const imageLike=(file.type||'').startsWith('image/');
     if(!heic && !imageLike){
-      alert('지원하지 않는 파일입니다. JPG, PNG, WEBP, HEIC, HEIF 이미지를 선택해 주세요.');
+      showLoadStatus('지원하지 않는 파일','JPG, PNG, WEBP, HEIC, HEIF 이미지를 선택해 주세요.',true);
       return;
     }
 
     setLoadState(heic?'HEIC/HEIF 변환 중…':'사진 불러오는 중…',true);
+    showLoadStatus(
+      heic?'HEIC/HEIF 변환 중…':'사진 불러오는 중…',
+      heic?'사진 크기에 따라 몇 초 걸릴 수 있습니다.':''
+    );
 
     try{
-      let img;
-      if(heic){
-        try{
-          if(typeof window.HeicTo!=='function')throw new Error('HEIC decoder library is unavailable');
-          let converted=await window.HeicTo({
-            blob:file,
-            type:'image/jpeg',
-            quality:0.96
-          });
-          if(Array.isArray(converted))converted=converted[0];
-          if(!(converted instanceof Blob))throw new Error('HEIC decoder returned an invalid result');
-          img=await blobToImage(converted);
-        }catch(decodeError){
-          console.warn('HEIC decoder fallback:',decodeError);
-          try{
-            img=await blobToImage(file);
-          }catch(nativeError){
-            throw decodeError;
-          }
-        }
-      }else{
-        img=await blobToImage(file);
-      }
+      const img=heic ? await decodeHeic(file) : await blobToImage(file);
       finishLoadedImage(img,file);
     }catch(err){
-      console.error(err);
-      alert('HEIC/HEIF 파일을 열지 못했습니다. 인터넷 연결을 확인한 뒤 다시 시도해 주세요. 일부 특수 HEIC(버스트·애니메이션·비표준 인코딩)는 첫 이미지 또는 일반 JPEG 변환이 필요할 수 있습니다.');
+      console.error('RetroTone image load failed:',err);
+      $('#previewCanvas').hidden=true;
+      $('#emptyState').hidden=false;
+      showLoadStatus(
+        heic?'HEIC 변환 실패':'사진 불러오기 실패',
+        heic
+          ? '이 버전은 HEIC 디코더를 앱 내부에 포함합니다. 파일이 손상되지 않았는지 확인해 주세요.'
+          : '이미지 파일을 다시 선택해 주세요.',
+        true
+      );
     }finally{
       setLoadState('사진을 드롭하거나 클릭',false);
       const input=$('#fileInput');
@@ -454,7 +506,7 @@
     }
   }
   async function exportImage(){
-    if(!sourceImg)return; const scale=+$('#exportScale').value, maxDim=Math.max(sourceImg.naturalWidth,sourceImg.naturalHeight)*scale; const c=document.createElement('canvas'); const oldCompare=compareMode;compareMode=false;renderToCanvas(c,state,maxDim,randomSeed);compareMode=oldCompare;
+    if(!sourceImg)return; const scale=+$('#exportScale').value, sw=sourceImg.naturalWidth||sourceImg.width, sh=sourceImg.naturalHeight||sourceImg.height, maxDim=Math.max(sw,sh)*scale; const c=document.createElement('canvas'); const oldCompare=compareMode;compareMode=false;renderToCanvas(c,state,maxDim,randomSeed);compareMode=oldCompare;
     const type=$('#exportFormat').value,q=+$('#quality').value/100; const blob=await new Promise(res=>c.toBlob(res,type,q)); if(!blob)return alert('내보내기에 실패했습니다.'); const ext=type==='image/png'?'png':type==='image/webp'?'webp':'jpg'; const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${sourceName}_retrotone.${ext}`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
   }
 
